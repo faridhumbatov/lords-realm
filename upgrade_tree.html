@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Lords Realm — Krallıq Texnologiya və Təkamül Ağacı</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=MedievalSharp&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-panel: rgba(14, 18, 28, 0.94);
+      --bg-card: rgba(20, 26, 42, 0.95);
+      --gold: #d4af37;
+      --gold-bright: #fcd34d;
+      --gold-glow: rgba(245, 200, 76, 0.35);
+      --cyan: #00f2fe;
+      --cyan-glow: rgba(0, 242, 254, 0.4);
+      --red: #f87171;
+      --green: #4ade80;
+      --purple: #c084fc;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --border-panel: rgba(212, 175, 55, 0.3);
+      --border-locked: rgba(255, 255, 255, 0.1);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* ─── Top Resource Bar ─── */
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(180deg, rgba(10, 14, 24, 0.98) 0%, rgba(6, 8, 14, 0.95) 100%);
+      border-bottom: 2px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.8);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      font-size: 26px;
+      filter: drop-shadow(0 0 10px rgba(245, 200, 76, 0.5));
+    }
+
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 200, 76, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: rgba(245, 200, 76, 0.3);
+      box-shadow: 0 0 12px var(--gold-glow);
+      transform: translateY(-1px);
+    }
+
+    /* Resource Counter Pills */
+    .resources-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .res-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .res-pill.gold { border-color: rgba(245, 200, 76, 0.4); color: #fde047; }
+    .res-pill.wood { border-color: rgba(217, 119, 6, 0.4); color: #fb923c; }
+    .res-pill.stone { border-color: rgba(148, 163, 184, 0.4); color: #cbd5e1; }
+    .res-pill.mana { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; }
+    .res-pill.gems { border-color: rgba(192, 132, 252, 0.4); color: #e879f9; }
+
+    .res-rate {
+      font-size: 10px;
+      color: #86efac;
+      margin-left: 2px;
+    }
+
+    /* ─── Category Filter Tabs ─── */
+    #category-bar {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(14, 18, 28, 0.85);
+      border: 1px solid var(--border-panel);
+      border-radius: 30px;
+      padding: 4px;
+      z-index: 90;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
+    }
+
+    /* ─── Tree Canvas Viewport ─── */
+    #tree-viewport {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      cursor: grab;
+      background-color: #07090e;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(20, 30, 50, 0.3) 0%, transparent 80%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    #tree-viewport:active {
+      cursor: grabbing;
+    }
+
+    #tree-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    /* SVG Connecting Lines */
+    #tree-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .conn-path {
+      fill: none;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.3s, stroke-width 0.3s;
+    }
+
+    .conn-path.locked {
+      stroke: rgba(255, 255, 255, 0.12);
+      stroke-dasharray: 6 6;
+    }
+
+    .conn-path.available {
+      stroke: #38bdf8;
+      stroke-width: 3.5;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+    }
+
+    .conn-path.completed {
+      stroke: #fcd34d;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px rgba(252, 211, 77, 0.7));
+    }
+
+    .conn-path.active {
+      stroke: #4ade80;
+      stroke-width: 4;
+      stroke-dasharray: 10 6;
+      animation: dashFlow 1.2s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.8));
+    }
+
+    @keyframes dashFlow {
+      from { stroke-dashoffset: 32; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* ─── Node Container ─── */
+    .tree-node {
+      position: absolute;
+      width: 190px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-locked);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), box-shadow 0.25s, border-color 0.25s, opacity 0.3s;
+      z-index: 10;
+    }
+
+    .tree-node:hover {
+      transform: translateY(-4px) scale(1.03);
+      z-index: 25;
+    }
+
+    /* Node States */
+    .tree-node.locked {
+      border-color: rgba(255, 255, 255, 0.12);
+      opacity: 0.55;
+      filter: grayscale(0.7);
+    }
+    .tree-node.locked:hover {
+      opacity: 0.8;
+      filter: grayscale(0.3);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .tree-node.available {
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px var(--cyan-glow), 0 8px 24px rgba(0, 0, 0, 0.8);
+      animation: pulseAvailable 2.4s infinite ease-in-out;
+    }
+
+    @keyframes pulseAvailable {
+      0%, 100% { box-shadow: 0 0 15px rgba(0, 242, 254, 0.3), 0 8px 24px rgba(0, 0, 0, 0.8); }
+      50% { box-shadow: 0 0 28px rgba(0, 242, 254, 0.7), 0 8px 24px rgba(0, 0, 0, 0.8); }
+    }
+
+    .tree-node.researching {
+      border-color: var(--green);
+      box-shadow: 0 0 22px rgba(74, 222, 128, 0.6);
+    }
+
+    .tree-node.completed {
+      border-color: var(--gold);
+      background: linear-gradient(180deg, rgba(30, 36, 56, 0.96) 0%, rgba(18, 22, 34, 0.96) 100%);
+      box-shadow: 0 0 18px var(--gold-glow);
+    }
+
+    .tree-node.dimmed {
+      opacity: 0.22 !important;
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    /* Node Header */
+    .node-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .node-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.5);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .tree-node.completed .node-icon-box {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+    .tree-node.available .node-icon-box {
+      border-color: var(--cyan);
+    }
+
+    .node-title-box {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .node-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node-branch-tag {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .branch-military { color: #f87171; }
+    .branch-economy { color: #4ade80; }
+    .branch-magic { color: #38bdf8; }
+    .branch-defense { color: #fbbf24; }
+
+    /* Node Level & Status Bar */
+    .node-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .node-lvl-pill {
+      background: rgba(0,0,0,0.4);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .tree-node.completed .node-lvl-pill {
+      color: var(--gold-bright);
+      border-color: rgba(245, 200, 76, 0.3);
+    }
+
+    .node-status-text {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Node Progress Bar (when researching) */
+    .node-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+      position: relative;
+    }
+
+    .tree-node.researching .node-progress-track {
+      display: block;
+    }
+
+    .node-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      box-shadow: 0 0 8px #4ade80;
+      transition: width 0.3s;
+    }
+
+    /* ─── Detailed Upgrade Modal / Drawer ─── */
+    #upgrade-modal {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 380px;
+      background: linear-gradient(180deg, rgba(20, 26, 42, 0.98) 0%, rgba(12, 15, 26, 0.98) 100%);
+      border: 2px solid var(--gold);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(212, 175, 55, 0.25);
+      z-index: 200;
+      transform: translateX(420px);
+      transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      backdrop-filter: blur(14px);
+    }
+
+    #upgrade-modal.show {
+      transform: translateX(0);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close-btn:hover { color: #fff; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      background: #0f1422;
+      border: 2px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 0 16px var(--gold-glow);
+    }
+
+    .modal-title h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 17px;
+      color: var(--gold-bright);
+    }
+
+    .modal-title span {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+
+    .stat-boost-card {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #86efac;
+    }
+
+    /* Prerequisite Warning Box */
+    .prereq-box {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: #fca5a5;
+      display: none;
+    }
+
+    .prereq-box.show {
+      display: block;
+    }
+
+    .prereq-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Cost Box */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .cost-item {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .cost-item.insufficient {
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #f87171;
+    }
+
+    /* Action Buttons */
+    .btn-research {
+      width: 100%;
+      background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-research:hover:not(:disabled) {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+    }
+
+    .btn-research:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .btn-speedup {
+      width: 100%;
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+      margin-top: 8px;
+    }
+    .btn-speedup:hover {
+      filter: brightness(1.15);
+    }
+
+    /* ─── View Controls (Zoom / Pan / Reset / Overview) ─── */
+    #hud-tools {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .hud-btn {
+      width: 42px;
+      height: 42px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 8px;
+      color: var(--gold-bright);
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      transition: all 0.2s;
+    }
+
+    .hud-btn:hover {
+      background: rgba(245, 200, 76, 0.25);
+      border-color: var(--gold-bright);
+      transform: scale(1.08);
+    }
+
+    /* Stats Overview Drawer Button */
+    #btn-overview {
+      position: fixed;
+      top: 68px;
+      right: 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 90;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      transition: all 0.2s;
+    }
+    #btn-overview:hover {
+      background: rgba(245, 200, 76, 0.25);
+    }
+
+    /* Slide-out Stats Overview Modal */
+    #stats-modal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 360px;
+      height: 100vh;
+      background: rgba(14, 18, 28, 0.98);
+      border-left: 2px solid var(--gold);
+      padding: 80px 24px 24px;
+      z-index: 150;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+      transform: translateX(100%);
+      transition: transform 0.35s ease;
+      overflow-y: auto;
+    }
+    #stats-modal.show {
+      transform: translateX(0);
+    }
+
+    .stats-title {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      color: var(--gold-bright);
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 10px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+    .stat-row span:last-child {
+      font-weight: 700;
+      color: #86efac;
+    }
+
+    /* Sound notification toast */
+    #toast-box {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(16, 24, 39, 0.96);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-bright);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+      z-index: 300;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    #toast-box.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Top Bar & Resources ─── -->
+  <header id="top-bar">
+    <div class="brand-section">
+      <div class="brand-logo">🏰</div>
+      <div>
+        <div class="brand-title">LORDS REALM</div>
+        <div class="brand-subtitle">Krallıq Akademiyası & Təkamül Ağacı</div>
+      </div>
+    </div>
+
+    <!-- Live Resource Bar -->
+    <div class="resources-row">
+      <div class="res-pill gold" title="Qızıl miqdarı">
+        <span>🪙</span>
+        <span id="res-gold">1,250</span>
+        <span class="res-rate" id="rate-gold">+5/s</span>
+      </div>
+      <div class="res-pill wood" title="Odun miqdarı">
+        <span>🪵</span>
+        <span id="res-wood">800</span>
+        <span class="res-rate" id="rate-wood">+4/s</span>
+      </div>
+      <div class="res-pill stone" title="Daş miqdarı">
+        <span>🪨</span>
+        <span id="res-stone">500</span>
+        <span class="res-rate" id="rate-stone">+3/s</span>
+      </div>
+      <div class="res-pill mana" title="Qədim Mana">
+        <span>🔮</span>
+        <span id="res-mana">150</span>
+        <span class="res-rate" id="rate-mana">+1/s</span>
+      </div>
+      <div class="res-pill gems" title="Zümrüd / Sürətləndirici Daşlar">
+        <span>💎</span>
+        <span id="res-gems">25</span>
+      </div>
+    </div>
+
+    <!-- Navigation & Quick Tools -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button class="nav-btn" id="btn-sound-toggle" title="Səsi Aç/Bağla">🔊 Səs</button>
+      <a href="index.html" class="nav-btn">🗺️ 3D Xəritəyə Keç</a>
+    </div>
+  </header>
+
+  <!-- ─── Category Filter Tabs ─── -->
+  <nav id="category-bar">
+    <button class="tab-btn active" data-filter="all">🌟 Bütün Ağac</button>
+    <button class="tab-btn" data-filter="military">⚔️ Hərbi Güc</button>
+    <button class="tab-btn" data-filter="economy">🌾 İqtisadiyyat</button>
+    <button class="tab-btn" data-filter="magic">🔮 Qədim Sehr</button>
+    <button class="tab-btn" data-filter="defense">🛡️ Qala Müdafiəsi</button>
+  </nav>
+
+  <!-- ─── Kingdom Stats Overview Button ─── -->
+  <button id="btn-overview">📊 Krallıq Göstəriciləri</button>
+
+  <!-- ─── Interactive Tree Canvas Viewport ─── -->
+  <main id="tree-viewport">
+    <div id="tree-world">
+      <!-- SVG Connectors -->
+      <svg id="tree-svg" width="3000" height="2400"></svg>
+      <!-- HTML Nodes injected by JS -->
+      <div id="tree-nodes-container"></div>
+    </div>
+  </main>
+
+  <!-- ─── View Navigation Tools ─── -->
+  <div id="hud-tools">
+    <button class="hud-btn" id="btn-zoom-in" title="Yaxınlaşdır">+</button>
+    <button class="hud-btn" id="btn-zoom-out" title="Uzaqlaşdır">−</button>
+    <button class="hud-btn" id="btn-reset-view" title="Görünüşü Sıfırla">🎯</button>
+    <button class="hud-btn" id="btn-reset-tree" title="Bütün Məlumatları Sıfırla (Restart)" style="color: #f87171; font-size: 14px;">🗑️</button>
+  </div>
+
+  <!-- ─── Upgrade & Research Inspector Card ─── -->
+  <aside id="upgrade-modal">
+    <button class="modal-close-btn" id="btn-modal-close">&times;</button>
+    
+    <div class="modal-header">
+      <div class="modal-icon" id="m-icon">⚔️</div>
+      <div class="modal-title">
+        <h3 id="m-title">Texnologiya Adı</h3>
+        <span id="m-branch">Hərbi Sahə • Səviyyə 0/5</span>
+      </div>
+    </div>
+
+    <p class="modal-desc" id="m-desc">Bu texnologiyanın təsviri və krallığa verəcəyi faydalar burada qeyd olunacaq.</p>
+
+    <!-- Prerequisite Error / Requirement Notice -->
+    <div class="prereq-box" id="m-prereq-box">
+      <div>⚠️ <strong>Öncə bu mərhələ açılmalıdır:</strong></div>
+      <div id="m-prereq-list"></div>
+    </div>
+
+    <!-- Stat Gain Preview -->
+    <div class="stat-boost-card">
+      <span class="stat-label" id="m-stat-label">Hücum Gücü Bonusu:</span>
+      <span class="stat-value" id="m-stat-val">+10% ➔ +20%</span>
+    </div>
+
+    <!-- Upgrade Costs -->
+    <div class="cost-grid" id="m-cost-grid"></div>
+
+    <!-- Research & Speedup Action Buttons -->
+    <button class="btn-research" id="btn-start-research">
+      <span>🔬</span>
+      <span id="btn-research-label">Araşdırmaya Başla (5s)</span>
+    </button>
+    <button class="btn-speedup" id="btn-speedup-research">
+      <span>⚡</span>
+      <span id="btn-speedup-label">Tezləşdir (1 💎)</span>
+    </button>
+  </aside>
+
+  <!-- ─── Slide-out Kingdom Overview Modal ─── -->
+  <aside id="stats-modal">
+    <button class="modal-close-btn" id="btn-stats-close" style="top: 24px; right: 24px;">&times;</button>
+    <h2 class="stats-title">👑 Krallıq Nailiyyətləri</h2>
+    <div class="stat-row"><span>Tamamlanan Tədqiqatlar:</span><span id="st-completed-count">0 / 22</span></div>
+    <div class="stat-row"><span>Ümumi Hərbi Güc Bonusu:</span><span id="st-military-boost">+0%</span></div>
+    <div class="stat-row"><span>Qızıl İstehsal Artımı:</span><span id="st-gold-boost">+0%</span></div>
+    <div class="stat-row"><span>Odun İstehsal Artımı:</span><span id="st-wood-boost">+0%</span></div>
+    <div class="stat-row"><span>Daş İstehsal Artımı:</span><span id="st-stone-boost">+0%</span></div>
+    <div class="stat-row"><span>Qədim Mana Gücü:</span><span id="st-mana-boost">+0%</span></div>
+    <div class="stat-row"><span>Qala Müdafiə Dözümlülüyü:</span><span id="st-defense-boost">+0%</span></div>
+    <div class="stat-row"><span>Tədqiqat Sürəti Bonusu:</span><span id="st-speed-boost">+0%</span></div>
+  </aside>
+
+  <!-- Notification Toast -->
+  <div id="toast-box">
+    <span id="toast-icon">✨</span>
+    <span id="toast-msg">Texnologiya uğurla tamamlandı!</span>
+  </div>
+
+  <!-- ─── Main Script ─── -->
+  <script>
+    'use strict';
+
+    /* ─────────────────────────────────────────────────────────────
+       1. TECH TREE NODE DEFINITIONS (BRANCHES & PREREQUISITES)
+    ───────────────────────────────────────────────────────────── */
+    const TECH_TREE_DATA = [
+      /* ═════════════════════════════════════════════════════════════
+         🌾 ECONOMY BRANCH (Sol Tərəf)
+      ═════════════════════════════════════════════════════════════ */
+      {
+        id: 'eco_agriculture',
+        name: 'Kənd Təsərrüfatı',
+        branch: 'economy',
+        icon: '🌾',
+        x: 180, y: 150,
+        maxLevel: 5,
+        prereqs: [],
+        desc: 'Münbit torpaqlarda əkinçiliyi təkmilləşdirir və əsas ərzaq/qızıl hasilatını artırır.',
+        statLabel: 'Qızıl İstehsalı',
+        statUnit: '/s',
+        statValues: [0, 2, 4, 7, 11, 16],
+        costs: { gold: 100, wood: 80, stone: 0, mana: 0 },
+        costMultiplier: 1.6,
+        baseTime: 4
+      },
+      {
+        id: 'eco_irrigation',
+        name: 'İrriqasiya Kanalları',
+        branch: 'economy',
+        icon: '🌊',
+        x: 80, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'eco_agriculture', level: 1 }],
+        desc: 'Çay sularını tarlalara yönləndirərək məhsuldarlığı ikiqat artırır.',
+        statLabel: 'Qızıl & Qida Bonusu',
+        statUnit: '%',
+        statValues: [0, 15, 30, 50, 75, 100],
+        costs: { gold: 250, wood: 180, stone: 100, mana: 0 },
+        costMultiplier: 1.7,
+        baseTime: 6
+      },
+      {
+        id: 'eco_forestry',
+        name: 'Meşə Təsərrüfatı',
+        branch: 'economy',
+        icon: '🪓',
+        x: 280, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'eco_agriculture', level: 1 }],
+        desc: 'Ağac kəsimini sürətləndirir və yüksək keyfiyyətli taxta istehsal edir.',
+        statLabel: 'Odun İstehsalı',
+        statUnit: '/s',
+        statValues: [0, 3, 6, 10, 15, 22],
+        costs: { gold: 200, wood: 150, stone: 50, mana: 0 },
+        costMultiplier: 1.65,
+        baseTime: 6
+      },
+      {
+        id: 'eco_quarrying',
+        name: 'Qaya Daş Karxanası',
+        branch: 'economy',
+        icon: '⛏️',
+        x: 80, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'eco_irrigation', level: 2 }],
+        desc: 'Möhkəm qranit və mərmər bloklarının qazıntısını avtomatlaşdırır.',
+        statLabel: 'Daş İstehsalı',
+        statUnit: '/s',
+        statValues: [0, 3, 6, 11, 18],
+        costs: { gold: 450, wood: 300, stone: 200, mana: 0 },
+        costMultiplier: 1.8,
+        baseTime: 8
+      },
+      {
+        id: 'eco_gold_smelting',
+        name: 'Qızıl Əritmə Ocağı',
+        branch: 'economy',
+        icon: '🪙',
+        x: 280, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'eco_forestry', level: 2 }],
+        desc: 'Xam qızıl filizini təmiz külçələrə çevirərək xəzinə gəlirini artırır.',
+        statLabel: 'Qızıl Xəzinə Artımı',
+        statUnit: '%',
+        statValues: [0, 20, 45, 75, 115],
+        costs: { gold: 600, wood: 400, stone: 350, mana: 50 },
+        costMultiplier: 1.85,
+        baseTime: 10
+      },
+      {
+        id: 'eco_royal_bank',
+        name: 'Krallıq Mərkəzi Bankı',
+        branch: 'economy',
+        icon: '🏛️',
+        x: 180, y: 780,
+        maxLevel: 3,
+        prereqs: [{ id: 'eco_quarrying', level: 2 }, { id: 'eco_gold_smelting', level: 2 }],
+        desc: 'Bütün krallıqda ticarət yollarını və vergi yığımını zirvəyə çatdırır.',
+        statLabel: 'Ümumi İqtisadi Gəlir',
+        statUnit: '%',
+        statValues: [0, 50, 110, 180],
+        costs: { gold: 1200, wood: 800, stone: 700, mana: 150 },
+        costMultiplier: 2.0,
+        baseTime: 15
+      },
+
+      /* ═════════════════════════════════════════════════════════════
+         ⚔️ MILITARY BRANCH (Mərkəz Sol)
+      ═════════════════════════════════════════════════════════════ */
+      {
+        id: 'mil_drills',
+        name: 'Döyüşçü Təlimi',
+        branch: 'military',
+        icon: '🗡️',
+        x: 620, y: 150,
+        maxLevel: 5,
+        prereqs: [],
+        desc: 'Piyadaların nizam-intizamını və əlbəyaxa döyüş ustalığını yüksəldir.',
+        statLabel: 'Piyada Hücum Gücü',
+        statUnit: '%',
+        statValues: [0, 8, 16, 26, 38, 52],
+        costs: { gold: 150, wood: 100, stone: 50, mana: 0 },
+        costMultiplier: 1.6,
+        baseTime: 4
+      },
+      {
+        id: 'mil_archery',
+        name: 'Uzaqvuran Oxçuluq',
+        branch: 'military',
+        icon: '🏹',
+        x: 520, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'mil_drills', level: 1 }],
+        desc: 'Kompozit yaylar vasitəsilə düşmənə uzaq məsafədən ağır zərbələr endirir.',
+        statLabel: 'Oxçu Məsafəsi & Ziyanı',
+        statUnit: '%',
+        statValues: [0, 10, 22, 36, 52, 70],
+        costs: { gold: 280, wood: 240, stone: 80, mana: 0 },
+        costMultiplier: 1.7,
+        baseTime: 6
+      },
+      {
+        id: 'mil_shieldwall',
+        name: 'Qalxan Divarı',
+        branch: 'military',
+        icon: '🛡️',
+        x: 720, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'mil_drills', level: 1 }],
+        desc: 'Ağır polad qalxanlarla ox yağışına və süvari hücumlarına qarşı qorunma.',
+        statLabel: 'Ordu Zirehi',
+        statUnit: '%',
+        statValues: [0, 12, 25, 40, 58, 80],
+        costs: { gold: 300, wood: 160, stone: 200, mana: 0 },
+        costMultiplier: 1.7,
+        baseTime: 7
+      },
+      {
+        id: 'mil_cavalry',
+        name: 'Zirehli Süvarilər',
+        branch: 'military',
+        icon: '🐎',
+        x: 520, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'mil_archery', level: 2 }],
+        desc: 'Döyüş meydanında ildırım sürəti ilə düşmən cinahlarını darmadağın edən atlılar.',
+        statLabel: 'Hücum Sürəti & Zərbə',
+        statUnit: '%',
+        statValues: [0, 25, 55, 90, 135],
+        costs: { gold: 650, wood: 450, stone: 300, mana: 40 },
+        costMultiplier: 1.85,
+        baseTime: 10
+      },
+      {
+        id: 'mil_siege_engines',
+        name: 'Ağır Katapultlar',
+        branch: 'military',
+        icon: '☄️',
+        x: 720, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'mil_shieldwall', level: 2 }],
+        desc: 'Nəhəng yandırıcı daşlar ataraq düşmən qalalarını darmadağın edən texnika.',
+        statLabel: 'Qala Dağıtma Gücü',
+        statUnit: '%',
+        statValues: [0, 30, 70, 120, 180],
+        costs: { gold: 750, wood: 600, stone: 500, mana: 60 },
+        costMultiplier: 1.9,
+        baseTime: 12
+      },
+      {
+        id: 'mil_dragon_riders',
+        name: 'Əjdaha Süvariləri',
+        branch: 'military',
+        icon: '🐉',
+        x: 620, y: 780,
+        maxLevel: 3,
+        prereqs: [{ id: 'mil_cavalry', level: 2 }, { id: 'mil_siege_engines', level: 2 }],
+        desc: 'Göylərdən od püskürərək orduları məhv edən əfsanəvi hava süvariləri.',
+        statLabel: 'Mütləq Ordu Ziyanı',
+        statUnit: '%',
+        statValues: [0, 75, 160, 260],
+        costs: { gold: 1800, wood: 1200, stone: 1000, mana: 400 },
+        costMultiplier: 2.1,
+        baseTime: 18
+      },
+
+      /* ═════════════════════════════════════════════════════════════
+         🛡️ DEFENSE BRANCH (Mərkəz Sağ)
+      ═════════════════════════════════════════════════════════════ */
+      {
+        id: 'def_palisades',
+        name: 'Möhkəm Hasarlar',
+        branch: 'defense',
+        icon: '🪵',
+        x: 1060, y: 150,
+        maxLevel: 5,
+        prereqs: [],
+        desc: 'Krallıq sərhədlərini yırtıcılardan və ilk basqınlardan qoruyan taxta maneələr.',
+        statLabel: 'Qala HP Bonusu',
+        statUnit: '%',
+        statValues: [0, 10, 22, 36, 52, 70],
+        costs: { gold: 120, wood: 150, stone: 60, mana: 0 },
+        costMultiplier: 1.6,
+        baseTime: 4
+      },
+      {
+        id: 'def_stone_walls',
+        name: 'Qranit Qala Divarları',
+        branch: 'defense',
+        icon: '🧱',
+        x: 960, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'def_palisades', level: 1 }],
+        desc: 'Ağır daş bloklarla ucaldılan və düşmən oxlarına davamlı qala istehkamları.',
+        statLabel: 'Divar Dözümlülüyü',
+        statUnit: '%',
+        statValues: [0, 20, 45, 75, 110, 150],
+        costs: { gold: 320, wood: 200, stone: 350, mana: 0 },
+        costMultiplier: 1.75,
+        baseTime: 7
+      },
+      {
+        id: 'def_watchtowers',
+        name: 'Gözətçi Qüllələri',
+        branch: 'defense',
+        icon: '🗼',
+        x: 1160, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'def_palisades', level: 1 }],
+        desc: 'Yüksək qüllələrdən düşmən kəşfiyyatını uzaqdan aşkarlayan və avtomatik ox atan postlar.',
+        statLabel: 'Qüllə Ziyanı & Baxış',
+        statUnit: '%',
+        statValues: [0, 15, 32, 52, 75, 105],
+        costs: { gold: 350, wood: 280, stone: 260, mana: 0 },
+        costMultiplier: 1.7,
+        baseTime: 7
+      },
+      {
+        id: 'def_fire_traps',
+        name: 'Odlu Tələlər',
+        branch: 'defense',
+        icon: '🔥',
+        x: 960, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'def_stone_walls', level: 2 }],
+        desc: 'Divarlara yaxınlaşan hücumçuları məhv edən yandırıcı neft və qətran xəndəkləri.',
+        statLabel: 'Tələ Ziyanı',
+        statUnit: '%',
+        statValues: [0, 35, 75, 125, 190],
+        costs: { gold: 700, wood: 500, stone: 450, mana: 80 },
+        costMultiplier: 1.85,
+        baseTime: 10
+      },
+      {
+        id: 'def_citadel',
+        name: 'Dəmir Qala İstehkamı',
+        branch: 'defense',
+        icon: '🏰',
+        x: 1060, y: 780,
+        maxLevel: 3,
+        prereqs: [{ id: 'def_fire_traps', level: 2 }, { id: 'def_watchtowers', level: 2 }],
+        desc: 'Ən güclü mühasirələrə belə aylarla tab gətirən sarsılmaz krallıq qalası.',
+        statLabel: 'Krallıq Müdafiə İndeksi',
+        statUnit: '%',
+        statValues: [0, 60, 130, 220],
+        costs: { gold: 1600, wood: 1000, stone: 1500, mana: 250 },
+        costMultiplier: 2.05,
+        baseTime: 16
+      },
+
+      /* ═════════════════════════════════════════════════════════════
+         🔮 MAGIC & ANCIENT LORE (Sağ Tərəf)
+      ═════════════════════════════════════════════════════════════ */
+      {
+        id: 'mag_mana_wells',
+        name: 'Sehrli Mana Bulaqları',
+        branch: 'magic',
+        icon: '🔮',
+        x: 1500, y: 150,
+        maxLevel: 5,
+        prereqs: [],
+        desc: 'Torpağın dərinliklərindən çıxan qədim mana axınlarını toplayır.',
+        statLabel: 'Mana Hasilatı',
+        statUnit: '/s',
+        statValues: [0, 1.5, 3.5, 6, 9.5, 14],
+        costs: { gold: 200, wood: 120, stone: 150, mana: 0 },
+        costMultiplier: 1.65,
+        baseTime: 5
+      },
+      {
+        id: 'mag_alchemy',
+        name: 'Krallıq Əlkimyası',
+        branch: 'magic',
+        icon: '🧪',
+        x: 1400, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'mag_mana_wells', level: 1 }],
+        desc: 'Bütün tədqiqatların və binaların tikinti sürətini artıran qədim iksirlər.',
+        statLabel: 'Tədqiqat Sürəti',
+        statUnit: '%',
+        statValues: [0, 10, 22, 36, 52, 70],
+        costs: { gold: 380, wood: 200, stone: 200, mana: 100 },
+        costMultiplier: 1.7,
+        baseTime: 7
+      },
+      {
+        id: 'mag_shield',
+        name: 'Sehrli Enerji Qalxanı',
+        branch: 'magic',
+        icon: '✨',
+        x: 1600, y: 350,
+        maxLevel: 5,
+        prereqs: [{ id: 'mag_mana_wells', level: 1 }],
+        desc: 'Düşmən sehirbazlarının hücumlarını dəf edən mavi güc sahəsi.',
+        statLabel: 'Sehrli Müdafiə',
+        statUnit: '%',
+        statValues: [0, 15, 32, 52, 75, 105],
+        costs: { gold: 420, wood: 180, stone: 250, mana: 140 },
+        costMultiplier: 1.75,
+        baseTime: 8
+      },
+      {
+        id: 'mag_teleport',
+        name: 'Teleport Qapıları',
+        branch: 'magic',
+        icon: '🌀',
+        x: 1400, y: 560,
+        maxLevel: 4,
+        prereqs: [{ id: 'mag_alchemy', level: 2 }],
+        desc: 'Orduların xəritədəki istənilən məntəqəyə anında intiqal etməsini təmin edir.',
+        statLabel: 'Yürüş Sürəti',
+        statUnit: '%',
+        statValues: [0, 30, 65, 110, 170],
+        costs: { gold: 900, wood: 500, stone: 600, mana: 300 },
+        costMultiplier: 1.9,
+        baseTime: 12
+      },
+      {
+        id: 'mag_titan_awakening',
+        name: 'Qədim Titanın Oyanışı',
+        branch: 'magic',
+        icon: '⚡',
+        x: 1500, y: 780,
+        maxLevel: 3,
+        prereqs: [{ id: 'mag_teleport', level: 2 }, { id: 'mag_shield', level: 2 }],
+        desc: 'Yerin təkində yatan əfsanəvi nəhəng Titanı oyadaraq krallığın xidmətinə verir.',
+        statLabel: 'Titan Mütləq Gücü',
+        statUnit: '%',
+        statValues: [0, 100, 220, 380],
+        costs: { gold: 2500, wood: 1500, stone: 2000, mana: 800 },
+        costMultiplier: 2.2,
+        baseTime: 22
+      }
+    ];
+
+    /* ─────────────────────────────────────────────────────────────
+       2. STATE & PROGRESS MANAGEMENT (LOCALSTORAGE)
+    ───────────────────────────────────────────────────────────── */
+    class TechTreeManager {
+      constructor() {
+        this.nodesData = TECH_TREE_DATA;
+        this.saveKey = 'lords_realm_tech_tree_save_v1';
+
+        // Resources state
+        this.resources = {
+          gold: 1500,
+          wood: 900,
+          stone: 600,
+          mana: 200,
+          gems: 30
+        };
+
+        // Node levels state: { node_id: level (0 = locked/unstarted) }
+        this.nodeLevels = {};
+        this.nodesData.forEach(n => this.nodeLevels[n.id] = 0);
+
+        // Research in progress: { nodeId, endTime, duration } or null
+        this.activeResearch = null;
+
+        // Viewport Transform (Pan & Zoom)
+        this.panX = 120;
+        this.panY = 60;
+        this.scale = 0.88;
+        this.isPanning = false;
+        this.startX = 0;
+        this.startY = 0;
+
+        // Active Category Filter
+        this.currentFilter = 'all';
+
+        // Sound enabled
+        this.soundEnabled = true;
+        this.audioCtx = null;
+
+        this.selectedNode = null;
+
+        this.loadSave();
+      }
+
+      init() {
+        this.setupAudio();
+        this.setupDOM();
+        this.renderConnectors();
+        this.renderNodes();
+        this.updateTransform();
+        this.startHeartbeat();
+        this.updateResourceUI();
+        this.updateStatsUI();
+
+        // Select first available node for immediate preview
+        this.openNodeModal(this.nodesData[0]);
+      }
+
+      /* ── Audio Synthesizer (Zero external mp3 files) ── */
+      setupAudio() {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.audioCtx = new AudioContext();
+        } catch(e) {
+          console.warn('Web Audio not supported');
+        }
+      }
+
+      playSound(type) {
+        if (!this.soundEnabled || !this.audioCtx) return;
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        const now = this.audioCtx.currentTime;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+
+        if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'start') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.2);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'complete') {
+          // Fanfare triad
+          const playNote = (freq, delay) => {
+            const o = this.audioCtx.createOscillator();
+            const g = this.audioCtx.createGain();
+            o.connect(g);
+            g.connect(this.audioCtx.destination);
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, now + delay);
+            g.gain.setValueAtTime(0.2, now + delay);
+            g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.35);
+            o.start(now + delay);
+            o.stop(now + delay + 0.35);
+          };
+          playNote(523.25, 0.0); // C5
+          playNote(659.25, 0.1); // E5
+          playNote(783.99, 0.2); // G5
+          playNote(1046.50, 0.35); // C6
+        } else if (type === 'error') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        }
+      }
+
+      /* ── Setup DOM & Listeners ── */
+      setupDOM() {
+        const vp = document.getElementById('tree-viewport');
+
+        // Pan with mouse drag
+        vp.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.tree-node')) return;
+          this.isPanning = true;
+          this.startX = e.clientX - this.panX;
+          this.startY = e.clientY - this.panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!this.isPanning) return;
+          this.panX = e.clientX - this.startX;
+          this.panY = e.clientY - this.startY;
+          this.updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          this.isPanning = false;
+        });
+
+        // Zoom with mouse wheel
+        vp.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+          const newScale = Math.min(1.5, Math.max(0.45, this.scale * zoomFactor));
+
+          // Zoom toward mouse position
+          const rect = vp.getBoundingClientRect();
+          const mx = e.clientX - rect.left;
+          const my = e.clientY - rect.top;
+
+          this.panX = mx - (mx - this.panX) * (newScale / this.scale);
+          this.panY = my - (my - this.panY) * (newScale / this.scale);
+          this.scale = newScale;
+          this.updateTransform();
+        }, { passive: false });
+
+        // HUD Controls
+        document.getElementById('btn-zoom-in').onclick = () => {
+          this.scale = Math.min(1.5, this.scale * 1.15);
+          this.updateTransform();
+        };
+        document.getElementById('btn-zoom-out').onclick = () => {
+          this.scale = Math.max(0.45, this.scale / 1.15);
+          this.updateTransform();
+        };
+        document.getElementById('btn-reset-view').onclick = () => {
+          this.panX = 120;
+          this.panY = 60;
+          this.scale = 0.88;
+          this.updateTransform();
+        };
+        document.getElementById('btn-reset-tree').onclick = () => {
+          if (confirm('Bütün açılmış tədqiqatları və resursları sıfırlamaq istədiyinizə əminsiniz?')) {
+            localStorage.removeItem(this.saveKey);
+            location.reload();
+          }
+        };
+
+        // Filter Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.onclick = () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.currentFilter = btn.dataset.filter;
+            this.applyCategoryFilter();
+            this.playSound('click');
+          };
+        });
+
+        // Modal Action buttons
+        document.getElementById('btn-modal-close').onclick = () => {
+          document.getElementById('upgrade-modal').classList.remove('show');
+        };
+        document.getElementById('btn-start-research').onclick = () => {
+          this.startResearch(this.selectedNode);
+        };
+        document.getElementById('btn-speedup-research').onclick = () => {
+          this.speedupResearch();
+        };
+
+        // Overview Drawer
+        document.getElementById('btn-overview').onclick = () => {
+          document.getElementById('stats-modal').classList.add('show');
+          this.updateStatsUI();
+          this.playSound('click');
+        };
+        document.getElementById('btn-stats-close').onclick = () => {
+          document.getElementById('stats-modal').classList.remove('show');
+        };
+
+        // Sound Toggle
+        const sBtn = document.getElementById('btn-sound-toggle');
+        sBtn.onclick = () => {
+          this.soundEnabled = !this.soundEnabled;
+          sBtn.textContent = this.soundEnabled ? '🔊 Səs' : '🔇 Səssiz';
+          sBtn.style.opacity = this.soundEnabled ? '1' : '0.6';
+        };
+      }
+
+      updateTransform() {
+        const world = document.getElementById('tree-world');
+        world.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+      }
+
+      /* ── Dependency Checks ── */
+      isPrereqMet(node) {
+        if (!node.prereqs || node.prereqs.length === 0) return true;
+        for (const p of node.prereqs) {
+          const curLvl = this.nodeLevels[p.id] || 0;
+          if (curLvl < p.level) return false;
+        }
+        return true;
+      }
+
+      getNodeStatus(node) {
+        const lvl = this.nodeLevels[node.id] || 0;
+        if (lvl >= node.maxLevel) return 'completed';
+        if (this.activeResearch && this.activeResearch.nodeId === node.id) return 'researching';
+        if (this.isPrereqMet(node)) return 'available';
+        return 'locked';
+      }
+
+      /* ── Render Connectors (Smooth Cubic Curves) ── */
+      renderConnectors() {
+        const svg = document.getElementById('tree-svg');
+        svg.innerHTML = '';
+
+        this.nodesData.forEach(node => {
+          if (!node.prereqs) return;
+          node.prereqs.forEach(p => {
+            const parent = this.nodesData.find(n => n.id === p.id);
+            if (!parent) return;
+
+            // Connect Parent Bottom Center to Child Top Center
+            const startX = parent.x + 95;
+            const startY = parent.y + 75;
+            const endX = node.x + 95;
+            const endY = node.y;
+
+            const dy = endY - startY;
+            const cp1X = startX;
+            const cp1Y = startY + dy * 0.55;
+            const cp2X = endX;
+            const cp2Y = endY - dy * 0.55;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+            path.setAttribute('d', d);
+
+            const parentLvl = this.nodeLevels[parent.id] || 0;
+            const isMet = parentLvl >= p.level;
+            const nodeStatus = this.getNodeStatus(node);
+
+            let cls = 'conn-path ';
+            if (!isMet) cls += 'locked';
+            else if (nodeStatus === 'researching') cls += 'active';
+            else if (nodeStatus === 'completed') cls += 'completed';
+            else cls += 'available';
+
+            path.setAttribute('class', cls);
+            path.id = `conn-${parent.id}-${node.id}`;
+            svg.appendChild(path);
+          });
+        });
+      }
+
+      /* ── Render Node Cards ── */
+      renderNodes() {
+        const container = document.getElementById('tree-nodes-container');
+        container.innerHTML = '';
+
+        this.nodesData.forEach(node => {
+          const el = document.createElement('div');
+          el.className = 'tree-node';
+          el.id = `node-${node.id}`;
+          el.style.left = `${node.x}px`;
+          el.style.top = `${node.y}px`;
+          el.dataset.branch = node.branch;
+
+          el.onclick = () => {
+            this.openNodeModal(node);
+            this.playSound('click');
+          };
+
+          el.innerHTML = `
+            <div class="node-header">
+              <div class="node-icon-box">${node.icon}</div>
+              <div class="node-title-box">
+                <div class="node-name">${node.name}</div>
+                <div class="node-branch-tag branch-${node.branch}">${this.getBranchName(node.branch)}</div>
+              </div>
+            </div>
+            <div class="node-body">
+              <span class="node-lvl-pill" id="lvl-${node.id}">Lv. 0/${node.maxLevel}</span>
+              <span class="node-status-text" id="status-${node.id}">🔒 Bağlıdır</span>
+            </div>
+            <div class="node-progress-track">
+              <div class="node-progress-fill" id="prog-${node.id}"></div>
+            </div>
+          `;
+
+          container.appendChild(el);
+        });
+
+        this.updateAllNodeVisuals();
+      }
+
+      getBranchName(b) {
+        switch(b) {
+          case 'military': return '⚔️ Hərbi';
+          case 'economy': return '🌾 İqtisadiyyat';
+          case 'magic': return '🔮 Qədim Sehr';
+          case 'defense': return '🛡️ Müdafiə';
+          default: return b;
+        }
+      }
+
+      updateAllNodeVisuals() {
+        this.nodesData.forEach(node => {
+          const el = document.getElementById(`node-${node.id}`);
+          if (!el) return;
+
+          const lvl = this.nodeLevels[node.id] || 0;
+          const status = this.getNodeStatus(node);
+
+          el.classList.remove('locked', 'available', 'researching', 'completed');
+          el.classList.add(status);
+
+          const lvlEl = document.getElementById(`lvl-${node.id}`);
+          const statEl = document.getElementById(`status-${node.id}`);
+
+          if (lvl >= node.maxLevel) {
+            lvlEl.textContent = `★ MAKS (${lvl})`;
+            statEl.innerHTML = `<span style="color:#fcd34d;">✨ Tamamlandı</span>`;
+          } else {
+            lvlEl.textContent = `Lv. ${lvl}/${node.maxLevel}`;
+            if (status === 'locked') {
+              statEl.innerHTML = `<span style="color:#94a3b8;">🔒 Bağlıdır</span>`;
+            } else if (status === 'available') {
+              statEl.innerHTML = `<span style="color:#38bdf8;">🔓 Hazırdır</span>`;
+            } else if (status === 'researching') {
+              statEl.innerHTML = `<span style="color:#4ade80;">⏳ Davam edir</span>`;
+            }
+          }
+        });
+
+        this.renderConnectors();
+        this.applyCategoryFilter();
+      }
+
+      applyCategoryFilter() {
+        const filter = this.currentFilter;
+        this.nodesData.forEach(node => {
+          const el = document.getElementById(`node-${node.id}`);
+          if (!el) return;
+          if (filter === 'all' || node.branch === filter) {
+            el.classList.remove('dimmed');
+          } else {
+            el.classList.add('dimmed');
+          }
+        });
+      }
+
+      /* ── Node Inspector Modal Details ── */
+      openNodeModal(node) {
+        this.selectedNode = node;
+        const modal = document.getElementById('upgrade-modal');
+        modal.classList.add('show');
+
+        const curLvl = this.nodeLevels[node.id] || 0;
+        const isMax = curLvl >= node.maxLevel;
+        const status = this.getNodeStatus(node);
+
+        document.getElementById('m-icon').textContent = node.icon;
+        document.getElementById('m-title').textContent = node.name;
+        document.getElementById('m-branch').textContent = `${this.getBranchName(node.branch)} • Səviyyə ${curLvl}/${node.maxLevel}`;
+        document.getElementById('m-desc').textContent = node.desc;
+
+        // Stat preview
+        const curStat = node.statValues[curLvl] || 0;
+        const nextStat = isMax ? curStat : (node.statValues[curLvl + 1] || curStat);
+        document.getElementById('m-stat-label').textContent = `${node.statLabel}:`;
+        document.getElementById('m-stat-val').textContent = isMax ? 
+          `+${curStat}${node.statUnit} (Maksimum)` : 
+          `+${curStat}${node.statUnit} ➔ +${nextStat}${node.statUnit}`;
+
+        // Prerequisite validation
+        const prereqBox = document.getElementById('m-prereq-box');
+        const prereqList = document.getElementById('m-prereq-list');
+        prereqList.innerHTML = '';
+
+        let canUnlock = true;
+        if (node.prereqs && node.prereqs.length > 0) {
+          node.prereqs.forEach(p => {
+            const parent = this.nodesData.find(n => n.id === p.id);
+            const pLvl = this.nodeLevels[p.id] || 0;
+            const met = pLvl >= p.level;
+            if (!met) canUnlock = false;
+
+            const item = document.createElement('div');
+            item.className = 'prereq-item';
+            item.innerHTML = `${met ? '✅' : '❌'} ${parent ? parent.name : p.id} (Tələb: Lv.${p.level}, Səndə: Lv.${pLvl})`;
+            item.onclick = () => {
+              if (parent) {
+                this.openNodeModal(parent);
+                this.panToNode(parent);
+              }
+            };
+            prereqList.appendChild(item);
+          });
+        }
+
+        if (!canUnlock && !isMax) {
+          prereqBox.classList.add('show');
+        } else {
+          prereqBox.classList.remove('show');
+        }
+
+        // Cost Calculation (scales per level)
+        const costGrid = document.getElementById('m-cost-grid');
+        costGrid.innerHTML = '';
+
+        const multiplier = Math.pow(node.costMultiplier, curLvl);
+        const reqGold = Math.round(node.costs.gold * multiplier);
+        const reqWood = Math.round(node.costs.wood * multiplier);
+        const reqStone = Math.round(node.costs.stone * multiplier);
+        const reqMana = Math.round(node.costs.mana * multiplier);
+
+        const hasGold = this.resources.gold >= reqGold;
+        const hasWood = this.resources.wood >= reqWood;
+        const hasStone = this.resources.stone >= reqStone;
+        const hasMana = this.resources.mana >= reqMana;
+        const hasResources = hasGold && hasWood && hasStone && hasMana;
+
+        const addCost = (icon, amount, has) => {
+          if (amount <= 0) return;
+          const div = document.createElement('div');
+          div.className = `cost-item ${has ? '' : 'insufficient'}`;
+          div.innerHTML = `<span>${icon}</span> <span>${amount.toLocaleString()}</span>`;
+          costGrid.appendChild(div);
+        };
+
+        if (!isMax) {
+          addCost('🪙', reqGold, hasGold);
+          addCost('🪵', reqWood, hasWood);
+          addCost('🪨', reqStone, hasStone);
+          addCost('🔮', reqMana, hasMana);
+        }
+
+        // Action Buttons Setup
+        const btnRes = document.getElementById('btn-start-research');
+        const btnSpd = document.getElementById('btn-speedup-research');
+        const resLabel = document.getElementById('btn-research-label');
+
+        const researchTime = Math.round(node.baseTime * (1 + curLvl * 0.8));
+
+        if (isMax) {
+          btnRes.disabled = true;
+          resLabel.textContent = 'Maksimum Səviyyəyə Çatıldı';
+          btnSpd.style.display = 'none';
+        } else if (status === 'researching') {
+          btnRes.disabled = true;
+          resLabel.textContent = 'Araşdırma Davam Edir...';
+          btnSpd.style.display = 'flex';
+        } else if (!canUnlock) {
+          btnRes.disabled = true;
+          resLabel.textContent = 'Öncəki Mərhələ Tələb Olunur';
+          btnSpd.style.display = 'none';
+        } else if (this.activeResearch) {
+          btnRes.disabled = true;
+          resLabel.textContent = 'Akademiya Məşğuldur';
+          btnSpd.style.display = 'none';
+        } else if (!hasResources) {
+          btnRes.disabled = true;
+          resLabel.textContent = 'Kifayət Qədər Resurs Yoxdur';
+          btnSpd.style.display = 'none';
+        } else {
+          btnRes.disabled = false;
+          resLabel.textContent = `Araşdırmaya Başla (${researchTime}s)`;
+          btnSpd.style.display = 'none';
+        }
+      }
+
+      panToNode(node) {
+        const vp = document.getElementById('tree-viewport');
+        const rect = vp.getBoundingClientRect();
+        this.panX = (rect.width / 2) - (node.x + 95) * this.scale;
+        this.panY = (rect.height / 2) - (node.y + 40) * this.scale;
+        this.updateTransform();
+      }
+
+      /* ── Start Research Action ── */
+      startResearch(node) {
+        if (!node) return;
+        const curLvl = this.nodeLevels[node.id] || 0;
+        if (curLvl >= node.maxLevel) return;
+        if (!this.isPrereqMet(node)) {
+          this.playSound('error');
+          this.showToast('⚠️ Öncəki tələb olunan mərhələni açmalısınız!');
+          return;
+        }
+
+        const multiplier = Math.pow(node.costMultiplier, curLvl);
+        const reqGold = Math.round(node.costs.gold * multiplier);
+        const reqWood = Math.round(node.costs.wood * multiplier);
+        const reqStone = Math.round(node.costs.stone * multiplier);
+        const reqMana = Math.round(node.costs.mana * multiplier);
+
+        if (this.resources.gold < reqGold || this.resources.wood < reqWood || 
+            this.resources.stone < reqStone || this.resources.mana < reqMana) {
+          this.playSound('error');
+          this.showToast('❌ Resurslar çatışmır!');
+          return;
+        }
+
+        // Deduct resources
+        this.resources.gold -= reqGold;
+        this.resources.wood -= reqWood;
+        this.resources.stone -= reqStone;
+        this.resources.mana -= reqMana;
+
+        // Apply alchemy research speed bonus if unlocked
+        const speedBonus = this.getStatBonus('mag_alchemy');
+        const durationSec = Math.max(2, Math.round((node.baseTime * (1 + curLvl * 0.8)) * (1 - speedBonus / 100)));
+
+        this.activeResearch = {
+          nodeId: node.id,
+          startTime: Date.now(),
+          endTime: Date.now() + durationSec * 1000,
+          duration: durationSec
+        };
+
+        this.playSound('start');
+        this.showToast(`🔬 [${node.name}] araşdırması başladı! (${durationSec}s)`);
+        this.updateResourceUI();
+        this.updateAllNodeVisuals();
+        this.openNodeModal(node);
+        this.saveState();
+      }
+
+      speedupResearch() {
+        if (!this.activeResearch) return;
+        if (this.resources.gems < 1) {
+          this.playSound('error');
+          this.showToast('❌ Zümrüd (💎) kifayət deyil!');
+          return;
+        }
+
+        this.resources.gems -= 1;
+        this.completeResearch(this.activeResearch.nodeId);
+      }
+
+      completeResearch(nodeId) {
+        const node = this.nodesData.find(n => n.id === nodeId);
+        if (!node) return;
+
+        this.nodeLevels[nodeId] = (this.nodeLevels[nodeId] || 0) + 1;
+        this.activeResearch = null;
+
+        this.playSound('complete');
+        this.showToast(`🎉 Təbrik! [${node.name}] Lv.${this.nodeLevels[nodeId]} tamamlandı!`);
+        this.createCelebrationParticles(node);
+
+        this.updateAllNodeVisuals();
+        this.updateResourceUI();
+        this.updateStatsUI();
+        if (this.selectedNode && this.selectedNode.id === nodeId) {
+          this.openNodeModal(node);
+        }
+        this.saveState();
+      }
+
+      /* ── Celebration Sparkles ── */
+      createCelebrationParticles(node) {
+        for (let i = 0; i < 16; i++) {
+          const p = document.createElement('div');
+          p.style.position = 'absolute';
+          p.style.left = `${node.x + 95}px`;
+          p.style.top = `${node.y + 40}px`;
+          p.style.width = '8px';
+          p.style.height = '8px';
+          p.style.borderRadius = '50%';
+          p.style.backgroundColor = ['#fcd34d', '#38bdf8', '#4ade80', '#e879f9'][Math.floor(Math.random() * 4)];
+          p.style.boxShadow = `0 0 10px ${p.style.backgroundColor}`;
+          p.style.pointerEvents = 'none';
+          p.style.zIndex = '100';
+          document.getElementById('tree-world').appendChild(p);
+
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 50 + Math.random() * 80;
+          const tx = Math.cos(angle) * dist;
+          const ty = Math.sin(angle) * dist;
+
+          p.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+            { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+          ], {
+            duration: 800 + Math.random() * 400,
+            easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)'
+          }).onfinish = () => p.remove();
+        }
+      }
+
+      /* ── Resource Production & Active Timers Heartbeat ── */
+      startHeartbeat() {
+        setInterval(() => {
+          // Passive production calculation
+          const goldProd = 5 + this.getStatBonus('eco_agriculture');
+          const woodProd = 4 + this.getStatBonus('eco_forestry');
+          const stoneProd = 3 + this.getStatBonus('eco_quarrying');
+          const manaProd = 1 + this.getStatBonus('mag_mana_wells');
+
+          const royalMultiplier = 1 + (this.getStatBonus('eco_royal_bank') / 100);
+
+          this.resources.gold += Math.round(goldProd * royalMultiplier);
+          this.resources.wood += Math.round(woodProd * royalMultiplier);
+          this.resources.stone += Math.round(stoneProd * royalMultiplier);
+          this.resources.mana += Math.round(manaProd);
+
+          // Update active research progress bar
+          if (this.activeResearch) {
+            const now = Date.now();
+            if (now >= this.activeResearch.endTime) {
+              this.completeResearch(this.activeResearch.nodeId);
+            } else {
+              const remaining = Math.max(0, (this.activeResearch.endTime - now) / 1000);
+              const total = this.activeResearch.duration;
+              const percent = Math.min(100, Math.max(0, ((total - remaining) / total) * 100));
+
+              const progEl = document.getElementById(`prog-${this.activeResearch.nodeId}`);
+              if (progEl) progEl.style.width = `${percent}%`;
+
+              if (this.selectedNode && this.selectedNode.id === this.activeResearch.nodeId) {
+                document.getElementById('btn-research-label').textContent = `Araşdırılır... (${remaining.toFixed(1)}s)`;
+              }
+            }
+          }
+
+          this.updateResourceUI();
+        }, 1000);
+      }
+
+      getStatBonus(nodeId) {
+        const node = this.nodesData.find(n => n.id === nodeId);
+        if (!node) return 0;
+        const lvl = this.nodeLevels[nodeId] || 0;
+        return node.statValues[lvl] || 0;
+      }
+
+      updateResourceUI() {
+        document.getElementById('res-gold').textContent = this.resources.gold.toLocaleString();
+        document.getElementById('res-wood').textContent = this.resources.wood.toLocaleString();
+        document.getElementById('res-stone').textContent = this.resources.stone.toLocaleString();
+        document.getElementById('res-mana').textContent = this.resources.mana.toLocaleString();
+        document.getElementById('res-gems').textContent = this.resources.gems.toLocaleString();
+
+        const royalMult = 1 + (this.getStatBonus('eco_royal_bank') / 100);
+        document.getElementById('rate-gold').textContent = `+${Math.round((5 + this.getStatBonus('eco_agriculture')) * royalMult)}/s`;
+        document.getElementById('rate-wood').textContent = `+${Math.round((4 + this.getStatBonus('eco_forestry')) * royalMult)}/s`;
+        document.getElementById('rate-stone').textContent = `+${Math.round((3 + this.getStatBonus('eco_quarrying')) * royalMult)}/s`;
+        document.getElementById('rate-mana').textContent = `+${Math.round(1 + this.getStatBonus('mag_mana_wells'))}/s`;
+      }
+
+      updateStatsUI() {
+        let completed = 0;
+        this.nodesData.forEach(n => {
+          if ((this.nodeLevels[n.id] || 0) >= n.maxLevel) completed++;
+        });
+
+        document.getElementById('st-completed-count').textContent = `${completed} / ${this.nodesData.length}`;
+        document.getElementById('st-military-boost').textContent = `+${this.getStatBonus('mil_drills') + this.getStatBonus('mil_cavalry') + this.getStatBonus('mil_dragon_riders')}%`;
+        document.getElementById('st-gold-boost').textContent = `+${this.getStatBonus('eco_gold_smelting') + this.getStatBonus('eco_royal_bank')}%`;
+        document.getElementById('st-wood-boost').textContent = `+${this.getStatBonus('eco_forestry') * 10}%`;
+        document.getElementById('st-stone-boost').textContent = `+${this.getStatBonus('eco_quarrying') * 10}%`;
+        document.getElementById('st-mana-boost').textContent = `+${this.getStatBonus('mag_titan_awakening')}%`;
+        document.getElementById('st-defense-boost').textContent = `+${this.getStatBonus('def_stone_walls') + this.getStatBonus('def_citadel')}%`;
+        document.getElementById('st-speed-boost').textContent = `+${this.getStatBonus('mag_alchemy')}%`;
+      }
+
+      showToast(msg) {
+        const t = document.getElementById('toast-box');
+        document.getElementById('toast-msg').textContent = msg;
+        t.classList.add('show');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+      }
+
+      saveState() {
+        const payload = {
+          resources: this.resources,
+          nodeLevels: this.nodeLevels
+        };
+        localStorage.setItem(this.saveKey, JSON.stringify(payload));
+      }
+
+      loadSave() {
+        try {
+          const raw = localStorage.getItem(this.saveKey);
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (data.resources) Object.assign(this.resources, data.resources);
+            if (data.nodeLevels) Object.assign(this.nodeLevels, data.nodeLevels);
+          }
+        } catch(e) {
+          console.warn('Save data load error', e);
+        }
+      }
+    }
+
+    // Launch Tech Tree
+    window.addEventListener('DOMContentLoaded', () => {
+      const manager = new TechTreeManager();
+      manager.init();
+    });
+  </script>
+</body>
+</html>

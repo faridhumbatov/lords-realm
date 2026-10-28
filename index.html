@@ -1,0 +1,2532 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚔ Lords Realm 3D — Təbii Krallıq Xəritəsi ⚔</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=MedievalSharp&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Three.js Local + CDN fallback -->
+  <script src="./three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #090b12;
+      --panel-bg: rgba(14, 17, 27, 0.94);
+      --panel-border: rgba(212, 175, 55, 0.45);
+      --gold: #f5c84c;
+      --gold-bright: #ffdf78;
+      --gold-dim: #997825;
+      --gold-glow: rgba(245, 200, 76, 0.4);
+      --crimson: #a62a2a;
+      --blue: #2b6cb0;
+      --text: #ede4d1;
+      --text-dim: #9e9584;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      outline: none;
+    }
+
+    #webgl-canvas.grabbing {
+      cursor: grabbing;
+    }
+
+    /* ─── Loading Screen ─── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at center, #1b1e2e 0%, #080910 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.4s ease;
+    }
+
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader-emblem {
+      font-size: 54px;
+      animation: pulseEmblem 2s infinite ease-in-out;
+      filter: drop-shadow(0 0 25px rgba(245, 200, 76, 0.7));
+    }
+
+    @keyframes pulseEmblem {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 18px rgba(245, 200, 76, 0.5)); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 40px rgba(245, 200, 76, 0.9)); }
+    }
+
+    .loader-title {
+      font-family: 'Cinzel', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow: 0 0 25px var(--gold-glow);
+    }
+
+    .loader-bar-wrap {
+      width: 400px;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid var(--gold-dim);
+      border-radius: 8px;
+      padding: 2px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 0 15px rgba(245, 200, 76, 0.2);
+    }
+
+    .loader-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #997825, #f5c84c, #fff4b8);
+      border-radius: 5px;
+      transition: width 0.15s ease-out;
+      box-shadow: 0 0 10px rgba(245, 200, 76, 0.75);
+    }
+
+    .loader-status {
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      font-family: 'MedievalSharp', serif;
+    }
+
+    /* ─── Top Bar ─── */
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      background: linear-gradient(180deg, rgba(14, 17, 27, 0.96) 0%, rgba(14, 17, 27, 0.86) 100%);
+      border-bottom: 2px solid var(--panel-border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-crest {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #1e5222, #0d2810);
+      border: 2px solid var(--gold);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 12px rgba(245, 200, 76, 0.35);
+    }
+
+    .kingdom-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .kingdom-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(245, 200, 76, 0.16);
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      color: var(--gold-bright);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .controls-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .seed-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 4px 10px;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+    }
+
+    .seed-box label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+
+    .seed-box input {
+      width: 85px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-family: monospace;
+      font-size: 13px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      background: linear-gradient(180deg, rgba(245, 200, 76, 0.28) 0%, rgba(153, 120, 37, 0.28) 100%);
+      border: 1px solid var(--gold-dim);
+      border-radius: 5px;
+      color: var(--gold-bright);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: linear-gradient(180deg, rgba(245, 200, 76, 0.48) 0%, rgba(153, 120, 37, 0.48) 100%);
+      border-color: var(--gold);
+      box-shadow: 0 0 12px var(--gold-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.16);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--gold-dim);
+      box-shadow: none;
+    }
+
+    .fps-badge {
+      font-family: monospace;
+      font-size: 12px;
+      color: #68d391;
+      padding: 3px 8px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(104, 211, 145, 0.35);
+      border-radius: 4px;
+      min-width: 58px;
+      text-align: center;
+    }
+
+    .coord-search {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.45);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .coord-search input {
+      width: 44px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 3px;
+      color: #fff;
+      font-size: 11px;
+      text-align: center;
+      padding: 2px 0;
+    }
+
+    /* ─── Tactical Minimap ─── */
+    #minimap-card {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 220px;
+      height: 250px;
+      background: var(--panel-bg);
+      border: 2px solid var(--panel-border);
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(6px);
+    }
+
+    .minimap-header {
+      padding: 6px 10px;
+      background: linear-gradient(90deg, rgba(245, 200, 76, 0.22) 0%, rgba(0, 0, 0, 0.3) 100%);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1.5px;
+    }
+
+    .minimap-canvas-wrap {
+      flex: 1;
+      position: relative;
+      background: #0d1a29;
+      cursor: crosshair;
+    }
+
+    #minimap-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .minimap-legend {
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* ─── Bottom HUD & Controls ─── */
+    #bottom-left-hud {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    #bottom-left-hud > * {
+      pointer-events: auto;
+    }
+
+    .coord-pill {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-bright);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(6px);
+    }
+
+    .coord-pill .loc-icon {
+      color: #e53e3e;
+      font-size: 14px;
+    }
+
+    .rts-controls-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tool-btn {
+      width: 38px;
+      height: 38px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+    }
+
+    .tool-btn:hover {
+      background: rgba(245, 200, 76, 0.25);
+      border-color: var(--gold);
+      transform: scale(1.06);
+    }
+
+    .tool-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ─── Tile Inspector Card ─── */
+    #inspector-panel {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(160%);
+      width: 440px;
+      background: linear-gradient(180deg, rgba(22, 26, 42, 0.97) 0%, rgba(13, 15, 26, 0.97) 100%);
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(245, 200, 76, 0.2);
+      padding: 16px;
+      z-index: 150;
+      transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      backdrop-filter: blur(10px);
+    }
+
+    #inspector-panel.show {
+      transform: translateX(-50%) translateY(0%);
+    }
+
+    .insp-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      color: var(--text-dim);
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .insp-close:hover { color: #fff; }
+
+    .insp-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(245, 200, 76, 0.2);
+      padding-bottom: 10px;
+    }
+
+    .insp-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: #1a1e32;
+      border: 2px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 12px rgba(245, 200, 76, 0.35);
+    }
+
+    .insp-title-box h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      color: var(--gold-bright);
+      margin-bottom: 2px;
+    }
+
+    .insp-title-box .insp-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .insp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 12px;
+    }
+
+    .insp-stat {
+      background: rgba(0,0,0,0.4);
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .insp-stat span.lbl {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .insp-stat span.val {
+      font-weight: 700;
+      color: #fff;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .insp-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .insp-actions .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-content {
+      width: 580px;
+      max-width: 90%;
+      background: var(--panel-bg);
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.9);
+    }
+    .modal-content h2 {
+      font-family: 'Cinzel', serif;
+      color: var(--gold);
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+    .modal-content p {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .modal-content textarea {
+      width: 100%;
+      height: 200px;
+      background: #090b10;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: #68d391;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 10px;
+      outline: none;
+      resize: none;
+      margin-bottom: 16px;
+    }
+    .modal-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Controls Help */
+    #controls-hint {
+      position: fixed;
+      top: 66px;
+      right: 18px;
+      background: rgba(14, 17, 27, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      z-index: 90;
+      pointer-events: none;
+    }
+    #controls-hint kbd {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #fff;
+      font-family: monospace;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader-emblem">🌿</div>
+    <div class="loader-title">Lords Realm 3D</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar-fill" id="load-bar"></div>
+    </div>
+    <div class="loader-status" id="load-status">Təbii relyef xəritəsi hesablanır...</div>
+  </div>
+
+  <!-- Top Bar -->
+  <header id="top-bar">
+    <div class="brand-section">
+      <div class="brand-crest">🌲</div>
+      <div>
+        <div class="kingdom-title">Lords Realm</div>
+      </div>
+      <div class="kingdom-tag">Təbii Krallıq Xəritəsi</div>
+    </div>
+
+    <div class="controls-section">
+      <div class="seed-box">
+        <label>SEED:</label>
+        <input type="text" id="seed-input" value="77421">
+      </div>
+      <button class="btn" id="btn-apply-seed">⚡ Yenilə</button>
+      <button class="btn btn-secondary" id="btn-random-seed">🎲 Təsadüfi Seed</button>
+      <button class="btn btn-secondary" id="btn-server-state">💾 Server İxrac</button>
+
+      <div class="coord-search">
+        <span style="font-size:11px; color:var(--gold-dim);">X:</span>
+        <input type="number" id="inp-x" value="0">
+        <span style="font-size:11px; color:var(--gold-dim);">Y:</span>
+        <input type="number" id="inp-y" value="0">
+        <button class="btn" id="btn-goto" style="padding:3px 8px; font-size:10px;">Get</button>
+      </div>
+
+      <div class="fps-badge" id="fps-counter">60 FPS</div>
+    </div>
+  </header>
+
+  <!-- Controls Hint -->
+  <div id="controls-hint">
+    <div>🖱 <kbd>Sol Klik + Sürüklə</kbd> — Xəritəni sağa-sola, irəli-geri sürüşdür</div>
+    <div>🔄 <kbd>Q / E və ya Düymələr</kbd> — Sağa / Sola fırlanma</div>
+    <div>⚙ <kbd>Təkər (Scroll)</kbd> — Yaxınlaşdır / Uzaqlaşdır</div>
+    <div>⌨ <kbd>WASD / Oxlar</kbd> — Səlis gəziş</div>
+    <div>🎯 <kbd>Sol Klik</kbd> — Ərazi və ya təbii zona seçimi</div>
+  </div>
+
+  <!-- Bottom Left HUD -->
+  <div id="bottom-left-hud">
+    <div class="coord-pill">
+      <span class="loc-icon">📍</span>
+      <span id="current-coords">X: 0 | Y: 0</span>
+      <span style="color:var(--text-dim); font-size:11px;">|</span>
+      <span id="current-biome" style="color:var(--gold-bright); font-size:12px;">Münbit Yaşıllıq</span>
+    </div>
+    <div class="rts-controls-bar">
+      <button class="tool-btn" id="btn-rot-left" title="Sola Fırla (Q)">⟲</button>
+      <button class="tool-btn" id="btn-rot-right" title="Sağa Fırla (E)">⟳</button>
+      <button class="tool-btn" id="btn-zoom-in" title="Yaxınlaşdır">+</button>
+      <button class="tool-btn" id="btn-zoom-out" title="Uzaqlaşdır">−</button>
+      <button class="tool-btn" id="btn-reset-cam" title="Mərkəzə Qayıt">🎯</button>
+      <button class="tool-btn" id="btn-toggle-daynight" title="Gündüz / Qürub / Gecə İşığı">☀️</button>
+      <button class="tool-btn" id="btn-audio" title="Səs Aç/Bağla">🔊</button>
+    </div>
+  </div>
+
+  <!-- Minimap Card -->
+  <div id="minimap-card">
+    <div class="minimap-header">
+      <span>KRALLIQ RADARI</span>
+      <span style="font-size:9px; color:var(--gold-bright);">XƏRİTƏ</span>
+    </div>
+    <div class="minimap-canvas-wrap" id="minimap-wrap">
+      <canvas id="minimap-canvas" width="220" height="200"></canvas>
+    </div>
+    <div class="minimap-legend">
+      <span>🟢 Yaşıllıq</span>
+      <span>🟡 Səhra</span>
+      <span>🟤 Yollar</span>
+      <span>🔵 Çay/Dəniz</span>
+    </div>
+  </div>
+
+  <!-- Tile / Entity Inspector Panel (Pure Map Information) -->
+  <div id="inspector-panel">
+    <div class="insp-close" id="insp-close">✕</div>
+    <div class="insp-header">
+      <div class="insp-avatar" id="insp-icon">🌲</div>
+      <div class="insp-title-box">
+        <h3 id="insp-title">Zümrüd Meşəlik Sahəsi</h3>
+        <div class="insp-subtitle" id="insp-subtitle">Təbii Krallıq Zonası</div>
+      </div>
+    </div>
+    <div class="insp-grid">
+      <div class="insp-stat">
+        <span class="lbl">Koordinatlar</span>
+        <span class="val" id="insp-coords">X: 120, Y: 85</span>
+      </div>
+      <div class="insp-stat">
+        <span class="lbl">Ərazi / Biome</span>
+        <span class="val" id="insp-biome">Münbit Yaşıllıq</span>
+      </div>
+      <div class="insp-stat">
+        <span class="lbl" id="insp-stat1-lbl">Təbii Xüsusiyyət</span>
+        <span class="val" id="insp-stat1-val" style="color:#68d391;">Geniş Təbii Düzənlik</span>
+      </div>
+      <div class="insp-stat">
+        <span class="lbl" id="insp-stat2-lbl">Relyef Tipi</span>
+        <span class="val" id="insp-stat2-val" style="color:#f5c84c;">Düz Zəmin (2D)</span>
+      </div>
+    </div>
+    <div class="insp-actions">
+      <button class="btn" id="insp-btn-focus">📍 Koordinata Get</button>
+      <button class="btn btn-secondary" id="insp-btn-bookmark">⭐ Yadda Saxla</button>
+      <button class="btn btn-secondary" id="insp-btn-copy-loc">📋 Kopyala</button>
+    </div>
+  </div>
+
+  <!-- Server Config Modal -->
+  <div class="modal-overlay" id="server-modal">
+    <div class="modal-content">
+      <h2>Server Konfiqurasiyası & Stabil Dünya</h2>
+      <p>Bu xəritə <strong>Seed əsaslı deterministik alqoritmlə</strong> yaradılıb. Qalalar çıxarılıb, yalnız təbii zəmin və səliqəli yerləşdirilmiş 3D ağaclar, daşlar və dağlar saxlanılıb. Yaşıllıq, torpaq və səhralığın rəng tonları hər zonada random şəkildə dəyişir. <strong>Eyni Seed saxlandıqda xəritə server və bütün oyunçular üçün 100% stabil qalır.</strong></p>
+      <textarea id="server-json-output" readonly></textarea>
+      <div class="modal-btns">
+        <button class="btn btn-secondary" id="btn-copy-json">📋 JSON Kopyala</button>
+        <button class="btn" id="btn-close-modal">Bağla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════
+       JAVASCRIPT: ENGINE & PROCEDURAL GENERATOR
+  ═════════════════════════════════════════════════════════════════ -->
+  <script>
+    'use strict';
+
+    /* ─────────────────────────────────────────────────────────────
+       1. CONSTANTS & CONFIGURATION
+    ───────────────────────────────────────────────────────────── */
+    const MAP_CONFIG = {
+      worldSize: 240,         // 240 x 240 world units
+      groundY: 0.0,           // Perfectly FLAT 2D ground plane
+      texResolution: 2048,    // Ultra-sharp 2048x2048 procedural canvas texture
+    };
+
+    const BIOMES = {
+      OCEAN: 'Dəniz / Okean',
+      RIVER: 'Axar Çay Yatağı',
+      BEACH: 'Qumsal Sahil',
+      GRASSLAND: 'Münbit Yaşıllıq',
+      DIRT: 'Münbit Torpaq Sahəsi',
+      DESERT: 'Qızıl Səhralıq',
+      STONE_ROAD: 'Qədim Daş Yol',
+      DIRT_ROAD: 'Torpaq Cığır',
+      MOUNTAIN_ZONE: 'Qayalıqlar və Dağlar',
+    };
+
+    // Fast distance from point (px, pz) to line segment (x1, z1) -> (x2, z2)
+    function distToSegment(px, pz, x1, z1, x2, z2) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const l2 = dx * dx + dz * dz;
+      if (l2 === 0) return Math.hypot(px - x1, pz - z1);
+      let t = ((px - x1) * dx + (pz - z1) * dz) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - (x1 + t * dx), pz - (z1 + t * dz));
+    }
+
+    // Web Audio Synthesizer
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+      playClick() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+      playSelect() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(680, this.ctx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.14, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.16);
+      }
+    }
+    const audio = new SoundEngine();
+
+    /* ─────────────────────────────────────────────────────────────
+       2. FAST SEEDED PRNG (Mulberry32) & 2D GRADIENT NOISE
+    ───────────────────────────────────────────────────────────── */
+    function createPRNG(seed) {
+      let a = (typeof seed === 'string' ? hashString(seed) : seed) | 0;
+      return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function hashString(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+      }
+      return hash >>> 0;
+    }
+
+    class Noise2D {
+      constructor(prng) {
+        this.p = new Uint8Array(512);
+        this.gx = new Float32Array(256);
+        this.gy = new Float32Array(256);
+        const perm = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) perm[i] = i;
+        for (let i = 255; i > 0; i--) {
+          const j = (prng() * (i + 1)) | 0;
+          const t = perm[i];
+          perm[i] = perm[j];
+          perm[j] = t;
+        }
+        for (let i = 0; i < 256; i++) {
+          this.p[i] = this.p[i + 256] = perm[i];
+          const angle = prng() * Math.PI * 2;
+          this.gx[i] = Math.cos(angle);
+          this.gy[i] = Math.sin(angle);
+        }
+      }
+
+      noise(x, y) {
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+        const xf = x - Math.floor(x);
+        const yf = y - Math.floor(y);
+
+        const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+        const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+
+        const a = this.p[X] + Y;
+        const aa = this.p[a];
+        const ab = this.p[a + 1];
+        const b = this.p[X + 1] + Y;
+        const ba = this.p[b];
+        const bb = this.p[b + 1];
+
+        const d00 = this.gx[aa] * xf + this.gy[aa] * yf;
+        const d10 = this.gx[ba] * (xf - 1) + this.gy[ba] * yf;
+        const d01 = this.gx[ab] * xf + this.gy[ab] * (yf - 1);
+        const d11 = this.gx[bb] * (xf - 1) + this.gy[bb] * (yf - 1);
+
+        const nx0 = d00 + u * (d10 - d00);
+        const nx1 = d01 + u * (d11 - d01);
+        return (nx0 + v * (nx1 - nx0)) * 0.5 + 0.5;
+      }
+
+      fbm(x, y, octaves = 4, persistence = 0.5, lacunarity = 2.0) {
+        let total = 0;
+        let frequency = 1;
+        let amplitude = 1;
+        let maxValue = 0;
+        for (let i = 0; i < octaves; i++) {
+          total += this.noise(x * frequency, y * frequency) * amplitude;
+          maxValue += amplitude;
+          amplitude *= persistence;
+          frequency *= lacunarity;
+        }
+        return total / maxValue;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       3. SEED-BASED WORLD GENERATOR (NATURAL LANDSCAPE ONLY)
+    ───────────────────────────────────────────────────────────── */
+    class WorldMapGenerator {
+      constructor(seedValue) {
+        this.seed = seedValue;
+        this.prng = createPRNG(seedValue);
+
+        // Biome shapes
+        this.noiseDesert = new Noise2D(this.prng);
+        this.noiseMountain = new Noise2D(this.prng);
+        this.noiseDirt = new Noise2D(this.prng);
+        this.noiseOcean = new Noise2D(createPRNG(this.seed + 404));
+
+        // Regional Color Variations (Grass, Desert, Dirt)
+        this.noiseGrassColor = new Noise2D(createPRNG(this.seed + 101));
+        this.noiseDesertColor = new Noise2D(createPRNG(this.seed + 202));
+        this.noiseDirtColor = new Noise2D(createPRNG(this.seed + 303));
+
+        // Procedural River strictly dependent on Seed
+        this.riverSegments = this.generateProceduralRiverSegments();
+
+        // Procedural natural roads
+        this.roads = this.generateNaturalRoadNetwork();
+        this.entities = [];
+      }
+
+      generateProceduralRiverSegments() {
+        const prng = createPRNG(this.seed + 8881);
+        const half = MAP_CONFIG.worldSize / 2;
+
+        const sides = ['N', 'E', 'S', 'W'];
+        const startSide = sides[Math.floor(prng() * 4)];
+        let endSide = sides[Math.floor(prng() * 4)];
+        while (endSide === startSide) {
+          endSide = sides[Math.floor(prng() * 4)];
+        }
+
+        const getBorderPt = (side) => {
+          const offset = (prng() - 0.5) * (MAP_CONFIG.worldSize - 60);
+          switch (side) {
+            case 'N': return { x: offset, z: -half + 14 };
+            case 'S': return { x: offset, z: half - 14 };
+            case 'E': return { x: half - 14, z: offset };
+            case 'W': return { x: -half + 14, z: offset };
+          }
+        };
+
+        const pStart = getBorderPt(startSide);
+        const pEnd = getBorderPt(endSide);
+
+        const mid1 = {
+          x: (pStart.x * 0.65 + pEnd.x * 0.35) + (prng() - 0.5) * 70,
+          z: (pStart.z * 0.65 + pEnd.z * 0.35) + (prng() - 0.5) * 70
+        };
+        const mid2 = {
+          x: (pStart.x * 0.35 + pEnd.x * 0.65) + (prng() - 0.5) * 70,
+          z: (pStart.z * 0.35 + pEnd.z * 0.65) + (prng() - 0.5) * 70
+        };
+
+        const controlPoints = [pStart, mid1, mid2, pEnd];
+
+        const splinePts = [];
+        const numSteps = 40;
+        for (let i = 0; i <= numSteps; i++) {
+          const t = i / numSteps;
+          const it = 1 - t;
+          const px = it * it * it * controlPoints[0].x +
+                     3 * it * it * t * controlPoints[1].x +
+                     3 * it * t * t * controlPoints[2].x +
+                     t * t * t * controlPoints[3].x;
+          const pz = it * it * it * controlPoints[0].z +
+                     3 * it * it * t * controlPoints[1].z +
+                     3 * it * t * t * controlPoints[2].z +
+                     t * t * t * controlPoints[3].z;
+          splinePts.push({ x: px, z: pz });
+        }
+
+        const segments = [];
+        for (let i = 0; i < splinePts.length - 1; i++) {
+          segments.push({ p0: splinePts[i], p1: splinePts[i + 1] });
+        }
+        return segments;
+      }
+
+      getRiverDistance(x, z) {
+        let minDist = 999;
+        for (const seg of this.riverSegments) {
+          const d = distToSegment(x, z, seg.p0.x, seg.p0.z, seg.p1.x, seg.p1.z);
+          if (d < minDist) minDist = d;
+        }
+        return minDist;
+      }
+
+      // Procedural natural meandering pathway (NO straight lines, NO crosses)
+      generateNaturalRoadNetwork() {
+        const prng = createPRNG(this.seed + 3481);
+        const half = MAP_CONFIG.worldSize / 2;
+        const segments = [];
+
+        // Single scenic serpentine path spanning across the kingdom with organic curvature
+        const startX = -half * 0.72 + (prng() - 0.5) * 20;
+        const startZ = -half * 0.25 + (prng() - 0.5) * 35;
+        const endX = half * 0.72 + (prng() - 0.5) * 20;
+        const endZ = half * 0.25 + (prng() - 0.5) * 35;
+
+        // 5 intermediate control points forming natural meandering curves
+        const ctrlPts = [{ x: startX, z: startZ }];
+        const numMids = 5;
+        for (let i = 1; i <= numMids; i++) {
+          const t = i / (numMids + 1);
+          const bx = startX * (1 - t) + endX * t;
+          const bz = startZ * (1 - t) + endZ * t;
+
+          // Organic curve oscillation
+          const angle = t * Math.PI * 2.2;
+          const latOffset = Math.sin(angle) * (36 + (prng() - 0.5) * 22);
+
+          // Perpendicular vector
+          const dx = endX - startX;
+          const dz = endZ - startZ;
+          const len = Math.hypot(dx, dz) || 1;
+          const px = -dz / len;
+          const pz = dx / len;
+
+          ctrlPts.push({
+            x: bx + px * latOffset,
+            z: bz + pz * latOffset
+          });
+        }
+        ctrlPts.push({ x: endX, z: endZ });
+
+        // Smooth Catmull-Rom spline interpolation for organic serpentine path
+        const densePts = [];
+        const curveSteps = 30;
+        for (let i = 0; i < ctrlPts.length - 1; i++) {
+          const p0 = ctrlPts[Math.max(0, i - 1)];
+          const p1 = ctrlPts[i];
+          const p2 = ctrlPts[i + 1];
+          const p3 = ctrlPts[Math.min(ctrlPts.length - 1, i + 2)];
+
+          for (let st = 0; st < curveSteps; st++) {
+            const t = st / curveSteps;
+            const t2 = t * t;
+            const t3 = t2 * t;
+
+            const qx = 0.5 * ((2 * p1.x) +
+              (-p0.x + p2.x) * t +
+              (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+              (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+
+            const qz = 0.5 * ((2 * p1.z) +
+              (-p0.z + p2.z) * t +
+              (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 +
+              (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
+
+            densePts.push({ x: qx, z: qz });
+          }
+        }
+        densePts.push(ctrlPts[ctrlPts.length - 1]);
+
+        for (let i = 0; i < densePts.length - 1; i++) {
+          segments.push({ p0: densePts[i], p1: densePts[i + 1] });
+        }
+
+        // Secondary scenic trail branch curving towards a pleasant grove
+        const branchStartIdx = Math.floor(densePts.length * 0.45);
+        const branchStart = densePts[branchStartIdx];
+        const branchDir = prng() > 0.5 ? 1 : -1;
+        const branchEnd = {
+          x: branchStart.x + (prng() - 0.5) * 35,
+          z: branchDir * (half * 0.62)
+        };
+        const branchMid = {
+          x: (branchStart.x + branchEnd.x) * 0.5 + (prng() - 0.5) * 22,
+          z: (branchStart.z + branchEnd.z) * 0.5 + (prng() - 0.5) * 22
+        };
+
+        const branchCtrl = [branchStart, branchMid, branchEnd];
+        let prevPt = branchStart;
+        for (let st = 1; st <= 40; st++) {
+          const t = st / 40;
+          const it = 1 - t;
+          const qx = it * it * branchCtrl[0].x + 2 * it * t * branchCtrl[1].x + t * t * branchCtrl[2].x;
+          const qz = it * it * branchCtrl[0].z + 2 * it * t * branchCtrl[1].z + t * t * branchCtrl[2].z;
+          const curPt = { x: qx, z: qz };
+          segments.push({ p0: prevPt, p1: curPt });
+          prevPt = curPt;
+        }
+
+        return { segments };
+      }
+
+      getRoadDistance(x, z) {
+        let minDist = 999;
+        const segs = this.roads.segments;
+        for (let i = 0; i < segs.length; i++) {
+          const seg = segs[i];
+          const d = distToSegment(x, z, seg.p0.x, seg.p0.z, seg.p1.x, seg.p1.z);
+          if (d < minDist) minDist = d;
+        }
+        // Procedural edge noise: gives soft, natural wavy contours with zero straight ruler edges
+        const edgeWiggle = (this.noiseDirt.fbm(x * 0.14, z * 0.14, 2, 0.5) - 0.5) * 0.85;
+        return minDist + edgeWiggle;
+      }
+
+      sampleBiome(x, z) {
+        const half = MAP_CONFIG.worldSize / 2;
+
+        const edgeDistX = half - Math.abs(x);
+        const edgeDistZ = half - Math.abs(z);
+        const edgeDist = Math.min(edgeDistX, edgeDistZ);
+
+        // Organic coastline variation (NO straight rectangular borders)
+        const coastNoise = (this.noiseOcean.fbm(x * 0.035, z * 0.035, 2, 0.5) - 0.5) * 12;
+        const organicEdge = edgeDist + coastNoise;
+
+        const isOcean = organicEdge < 10;
+        const isBeach = organicEdge >= 10 && organicEdge < 18;
+
+        const riverDist = this.getRiverDistance(x, z);
+        const isRiver = riverDist < 3.2 && !isOcean;
+        const isRiverBank = riverDist >= 3.2 && riverDist < 5.0 && !isOcean;
+
+        const roadDist = this.getRoadDistance(x, z);
+        const isStoneRoad = roadDist < 1.15 && !isRiver && !isOcean;
+        const isDirtRoad = roadDist >= 1.15 && roadDist < 2.3 && !isRiver && !isOcean;
+
+        // Mountain zones (where 3D peaks are placed)
+        const mountainNoise = this.noiseMountain.fbm(x * 0.018 + 70, z * 0.018 - 70, 3, 0.5);
+        const isMountainZone = mountainNoise > 0.70 && !isOcean && !isRiver && roadDist > 5.0;
+
+        // Desert region
+        const desertNoise = this.noiseDesert.fbm(x * 0.009 - 40, z * 0.009 + 30, 3, 0.5);
+        const isDesert = desertNoise > 0.65 && !isOcean && !isRiver && !isStoneRoad && !isMountainZone;
+
+        // Dirt patches
+        const dirtNoise = this.noiseDirt.fbm(x * 0.02 + 10, z * 0.02 + 10, 2, 0.5);
+        const isDirt = dirtNoise > 0.68 && !isOcean && !isRiver && !isStoneRoad && !isDesert && !isMountainZone;
+
+        let biome = BIOMES.GRASSLAND;
+        if (isOcean) biome = BIOMES.OCEAN;
+        else if (isRiver) biome = BIOMES.RIVER;
+        else if (isBeach) biome = BIOMES.BEACH;
+        else if (isStoneRoad) biome = BIOMES.STONE_ROAD;
+        else if (isDirtRoad) biome = BIOMES.DIRT_ROAD;
+        else if (isMountainZone) biome = BIOMES.MOUNTAIN_ZONE;
+        else if (isDesert) biome = BIOMES.DESERT;
+        else if (isDirt) biome = BIOMES.DIRT;
+
+        return {
+          biome,
+          isOcean,
+          isBeach,
+          isRiver,
+          isRiverBank,
+          riverDist,
+          isStoneRoad,
+          isDirtRoad,
+          isMountainZone,
+          isDesert,
+          isDirt,
+          roadDist
+        };
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       4. THREE.JS 3D ENGINE (CLEAN, SPACIOUS, BEAUTIFUL LANDSCAPE)
+    ───────────────────────────────────────────────────────────── */
+    class RealmEngine {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.seed = parseInt(document.getElementById('seed-input').value, 10) || 77421;
+        this.generator = null;
+
+        // Three.js Core
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+
+        // Camera RTS State
+        this.camTarget = new THREE.Vector3(0, 0, 0);
+        this.camDistance = 115;
+        this.camYaw = Math.PI / 4;
+        this.camPitch = 0.88;
+        this.targetCamTarget = new THREE.Vector3(0, 0, 0);
+        this.targetCamDistance = 115;
+        this.targetCamYaw = Math.PI / 4;
+
+        this.isDragging = false;
+        this.previousMouse = { x: 0, y: 0 };
+        this.keys = {};
+
+        // Lighting & Atmosphere
+        this.sunLight = null;
+        this.ambientLight = null;
+        this.timeOfDay = 0;
+
+        // Meshes
+        this.groundMesh = null;
+        this.instancedGroups = {};
+
+        // Raycasting
+        this.raycaster = new THREE.Raycaster();
+        this.mousePos = new THREE.Vector2();
+
+        // Minimap
+        this.minimapCanvas = document.getElementById('minimap-canvas');
+        this.minimapCtx = this.minimapCanvas.getContext('2d');
+        this.minimapBgData = null;
+
+        // FPS
+        this.frameCount = 0;
+        this.fpsTimer = performance.now();
+      }
+
+      async init() {
+        this.updateLoading(10, '3D Xəritə Mühərriki başladılır...');
+        this.setupRenderer();
+        this.setupScene();
+        this.setupCamera();
+        this.setupLighting();
+        this.setupEventListeners();
+
+        await this.buildWorld(this.seed);
+
+        this.updateLoading(100, 'Xoş Gəlmisiniz!');
+        setTimeout(() => {
+          document.getElementById('loading-screen').classList.add('fade-out');
+        }, 350);
+
+        this.animate();
+      }
+
+      setupRenderer() {
+        this.renderer = new THREE.WebGLRenderer({
+          canvas: this.canvas,
+          antialias: true,
+          powerPreference: 'high-performance'
+        });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.08;
+      }
+
+      setupScene() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x87ceeb);
+        this.scene.fog = new THREE.FogExp2(0xa8d4f0, 0.0032);
+      }
+
+      setupCamera() {
+        this.camera = new THREE.PerspectiveCamera(
+          46,
+          window.innerWidth / window.innerHeight,
+          1,
+          900
+        );
+        this.camera.up.set(0, 1, 0);
+        this.updateCameraPosition();
+      }
+
+      setupLighting() {
+        this.ambientLight = new THREE.AmbientLight(0xe8f0fe, 0.78);
+        this.scene.add(this.ambientLight);
+
+        this.sunLight = new THREE.DirectionalLight(0xfff8e7, 1.35);
+        this.sunLight.position.set(110, 160, 90);
+        this.sunLight.castShadow = true;
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.camera.near = 10;
+        this.sunLight.shadow.camera.far = 450;
+        const d = 140;
+        this.sunLight.shadow.camera.left = -d;
+        this.sunLight.shadow.camera.right = d;
+        this.sunLight.shadow.camera.top = d;
+        this.sunLight.shadow.camera.bottom = -d;
+        this.sunLight.shadow.bias = -0.0004;
+        this.scene.add(this.sunLight);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444433, 0.38);
+        this.scene.add(hemiLight);
+      }
+
+      updateLoading(percent, text) {
+        document.getElementById('load-bar').style.width = percent + '%';
+        document.getElementById('load-status').textContent = text;
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         5. PROCEDURAL TEXTURE GENERATION WITH COLOR VARIATIONS
+      ───────────────────────────────────────────────────────────── */
+      async buildWorld(seedValue) {
+        this.seed = seedValue;
+        this.generator = new WorldMapGenerator(seedValue);
+
+        // Clear previous meshes
+        if (this.groundMesh) this.scene.remove(this.groundMesh);
+        for (const key in this.instancedGroups) {
+          if (this.instancedGroups[key]) this.scene.remove(this.instancedGroups[key]);
+        }
+        this.instancedGroups = {};
+
+        this.updateLoading(30, 'Zəmin rəngləri və təbii teksturalar hesablanır...');
+        await new Promise(r => setTimeout(r, 20));
+
+        this.createUltraSharpGround();
+
+        this.updateLoading(70, '3D Ağaclar, Dağlar və Qayalar səliqəli yerləşdirilir...');
+        await new Promise(r => setTimeout(r, 20));
+
+        this.spawnSpacious3DObjects();
+
+        this.updateLoading(95, 'Taktiki Radar hazırlanır...');
+        await new Promise(r => setTimeout(r, 20));
+
+        this.generateMinimapTexture();
+      }
+
+      createUltraSharpGround() {
+        const texCanvas = document.createElement('canvas');
+        const W = MAP_CONFIG.texResolution;
+        texCanvas.width = W;
+        texCanvas.height = W;
+        const ctx = texCanvas.getContext('2d');
+
+        ctx.fillStyle = '#569b35';
+        ctx.fillRect(0, 0, W, W);
+
+        const imgData = ctx.getImageData(0, 0, W, W);
+        const data = imgData.data;
+
+        for (let py = 0; py < W; py += 2) {
+          for (let px = 0; px < W; px += 2) {
+            const wx = (px / W - 0.5) * MAP_CONFIG.worldSize;
+            const wz = (py / W - 0.5) * MAP_CONFIG.worldSize;
+
+            const sample = this.generator.sampleBiome(wx, wz);
+
+            // Regional Color Noise (Variations for Grass, Desert, Dirt)
+            const gVar = this.generator.noiseGrassColor.fbm(wx * 0.015, wz * 0.015, 3, 0.5);
+            const dVar = this.generator.noiseDesertColor.fbm(wx * 0.02, wz * 0.02, 2, 0.5);
+            const dirtVar = this.generator.noiseDirtColor.fbm(wx * 0.025, wz * 0.025, 2, 0.5);
+
+            let r, g, b;
+
+            if (sample.isOcean) {
+              // Deep coastal ocean blue with gentle turquoise edge
+              r = 28; g = 95; b = 158;
+            } else if (sample.isRiver) {
+              // Sparkling crystalline river with bright shallow shore
+              if (sample.riverDist > 2.5) {
+                r = 92; g = 192; b = 218; // Soft cyan shallow
+              } else {
+                r = 38; g = 135; b = 205; // Clear azure river
+              }
+            } else if (sample.isBeach || sample.isRiverBank) {
+              // Warm golden-cream sandy shore
+              const sandGrain = (dVar - 0.5) * 18;
+              r = Math.round(226 + sandGrain);
+              g = Math.round(204 + sandGrain);
+              b = Math.round(152 + sandGrain);
+            } else if (sample.isStoneRoad) {
+              // Rustic cobblestone and river pebbles with natural mineral grain (NO straight grid tiles)
+              const pebbleNoise = this.generator.noiseDirtColor.fbm(wx * 0.5, wz * 0.5, 3, 0.5);
+              const grain = (pebbleNoise - 0.5) * 36;
+              r = Math.round(136 + grain);
+              g = Math.round(138 + grain);
+              b = Math.round(144 + grain);
+            } else if (sample.isDirtRoad) {
+              // Warm rustic earth path blending softly into meadow
+              const trailNoise = this.generator.noiseDirtColor.fbm(wx * 0.35, wz * 0.35, 2, 0.5);
+              const grain = (trailNoise - 0.5) * 28;
+              r = Math.round(154 + grain);
+              g = Math.round(118 + grain);
+              b = Math.round(76 + grain);
+            } else if (sample.isDesert) {
+              // Warm procedural desert dunes with soft gradients
+              if (dVar < 0.33) {
+                r = 236; g = 194; b = 118; // Rich golden sand
+              } else if (dVar < 0.67) {
+                r = 244; g = 218; b = 154; // Sunlit ivory sand
+              } else {
+                r = 230; g = 172; b = 104; // Warm amber dunes
+              }
+            } else if (sample.isDirt) {
+              // Fertile soil patches with rich earthy tones
+              if (dirtVar < 0.35) {
+                r = 120; g = 82; b = 48; // Rich dark brown peat
+              } else if (dirtVar < 0.70) {
+                r = 155; g = 92; b = 56; // Warm terracotta clay
+              } else {
+                r = 168; g = 128; b = 84; // Soft loam earth
+              }
+            } else if (sample.isMountainZone) {
+              r = 105; g = 112; b = 120; // Slate stone mountain base
+            } else {
+              // LUSH VIBRANT GREEN REALM (Artistic multi-hue meadow variation)
+              if (gVar < 0.25) {
+                r = 58; g = 132; b = 42; // Deep emerald moss green
+              } else if (gVar < 0.55) {
+                r = 86; g = 168; b = 52; // Classic vibrant meadow green
+              } else if (gVar < 0.80) {
+                r = 112; g = 188; b = 62; // Soft bright lime meadow
+              } else {
+                r = 130; g = 182; b = 68; // Warm sunlit pasture green
+              }
+            }
+
+            for (let dy = 0; dy < 2; dy++) {
+              for (let dx = 0; dx < 2; dx++) {
+                const idx = ((py + dy) * W + (px + dx)) * 4;
+                data[idx + 0] = Math.max(0, Math.min(255, r));
+                data[idx + 1] = Math.max(0, Math.min(255, g));
+                data[idx + 2] = Math.max(0, Math.min(255, b));
+                data[idx + 3] = 255;
+              }
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        // Completely organic landscape without artificial tactical grid lines (NO ctx.stroke)
+
+        const groundTexture = new THREE.CanvasTexture(texCanvas);
+        groundTexture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        groundTexture.minFilter = THREE.LinearMipmapLinearFilter;
+        groundTexture.magFilter = THREE.LinearFilter;
+        groundTexture.generateMipmaps = true;
+
+        const geom = new THREE.PlaneGeometry(MAP_CONFIG.worldSize, MAP_CONFIG.worldSize);
+        geom.rotateX(-Math.PI / 2);
+
+        const mat = new THREE.MeshStandardMaterial({
+          map: groundTexture,
+          roughness: 0.82,
+          metalness: 0.05
+        });
+
+        this.groundMesh = new THREE.Mesh(geom, mat);
+        this.groundMesh.receiveShadow = true;
+        this.scene.add(this.groundMesh);
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         6. 3D OBJECTS (SPACED, NO CASTLES, NO OVERLAPPING)
+      ───────────────────────────────────────────────────────────── */
+      spawnSpacious3DObjects() {
+        const prng = createPRNG(this.seed + 1099);
+
+        // Spatial collision reservation buffer so objects NEVER collide or overlap
+        const occupied = [];
+        const isFree = (x, z, r) => {
+          for (let i = 0; i < occupied.length; i++) {
+            const occ = occupied[i];
+            if (Math.hypot(x - occ.x, z - occ.z) < (r + occ.r)) return false;
+          }
+          return true;
+        };
+        const reserve = (x, z, r) => {
+          occupied.push({ x, z, r });
+        };
+
+        const mountainSpawns = [];
+        const rockSpawns = [];
+        const goldSpawns = [];
+        const farmSpawns = [];
+        const lumberSpawns = [];
+        const quarrySpawns = [];
+        const pineSpawns = [];
+        const oakSpawns = [];
+        const palmSpawns = [];
+
+        // 1. Mountains in Mountain Zones (Spaced cleanly, reduced count ~35-45)
+        for (let i = 0; i < 300; i++) {
+          const x = (prng() - 0.5) * (MAP_CONFIG.worldSize - 32);
+          const z = (prng() - 0.5) * (MAP_CONFIG.worldSize - 32);
+          const sample = this.generator.sampleBiome(x, z);
+
+          if (sample.isMountainZone && !sample.isOcean && !sample.isRiver && sample.roadDist > 4.5) {
+            if (isFree(x, z, 5.0)) {
+              reserve(x, z, 5.0);
+              mountainSpawns.push({
+                x, y: 0, z,
+                scale: 1.4 + prng() * 1.6,
+                rotY: prng() * Math.PI * 2
+              });
+            }
+          }
+        }
+
+        // 2. Resource Sites (Natural Mines, Farms, Quarries - sparsely placed, reduced count)
+        for (let i = 0; i < 400; i++) {
+          const x = (prng() - 0.5) * (MAP_CONFIG.worldSize - 36);
+          const z = (prng() - 0.5) * (MAP_CONFIG.worldSize - 36);
+          const sample = this.generator.sampleBiome(x, z);
+
+          if (!sample.isOcean && !sample.isRiver && !sample.isMountainZone && sample.roadDist > 3.5) {
+            if (isFree(x, z, 6.0)) {
+              const roll = prng();
+              if (roll < 0.08) {
+                reserve(x, z, 6.0);
+                const sub = prng();
+                const lvl = Math.floor(prng() * 5) + 1;
+                if (sub < 0.25) {
+                  goldSpawns.push({ x, y: 0, z, scale: 0.95, type: 'GOLD_MINE', level: lvl, name: `Qızıl Yatağı Lv.${lvl}` });
+                } else if (sub < 0.50) {
+                  farmSpawns.push({ x, y: 0, z, scale: 0.95, type: 'FARM', level: lvl, name: `Təbii Ferma Lv.${lvl}` });
+                } else if (sub < 0.75) {
+                  lumberSpawns.push({ x, y: 0, z, scale: 0.95, type: 'LUMBER', level: lvl, name: `Meşə Düşərgəsi Lv.${lvl}` });
+                } else {
+                  quarrySpawns.push({ x, y: 0, z, scale: 0.95, type: 'QUARRY', level: lvl, name: `Daş Karxanası Lv.${lvl}` });
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Trees & Rocks (Drastically reduced count, neatly spaced out)
+        for (let i = 0; i < 800; i++) {
+          const x = (prng() - 0.5) * (MAP_CONFIG.worldSize - 28);
+          const z = (prng() - 0.5) * (MAP_CONFIG.worldSize - 28);
+          const sample = this.generator.sampleBiome(x, z);
+
+          if (sample.isOcean || sample.isRiver || sample.roadDist < 2.5) continue;
+
+          // Desert Palms in Desert
+          if (sample.isDesert) {
+            if (isFree(x, z, 4.5) && prng() < 0.25) {
+              reserve(x, z, 4.5);
+              palmSpawns.push({ x, y: 0, z, scale: 0.8 + prng() * 0.4 });
+            }
+          }
+          // Rocks along mountain edges and plains
+          else if (sample.isMountainZone || prng() < 0.15) {
+            if (isFree(x, z, 3.5) && rockSpawns.length < 65) {
+              reserve(x, z, 3.5);
+              rockSpawns.push({ x, y: 0, z, scale: 0.6 + prng() * 0.7 });
+            }
+          }
+          // Pine & Oak Trees in lush grass (Clean, spaced groves ~180-220 trees total)
+          else if (!sample.isMountainZone && !sample.isDesert) {
+            if (isFree(x, z, 4.2) && (pineSpawns.length + oakSpawns.length) < 220) {
+              reserve(x, z, 4.2);
+              if (prng() < 0.5) {
+                pineSpawns.push({ x, y: 0, z, scale: 0.85 + prng() * 0.45 });
+              } else {
+                oakSpawns.push({ x, y: 0, z, scale: 0.85 + prng() * 0.45 });
+              }
+            }
+          }
+        }
+
+        this.generator.entities = [
+          ...goldSpawns,
+          ...farmSpawns,
+          ...lumberSpawns,
+          ...quarrySpawns
+        ];
+
+        // Build Compound 3D Instanced Meshes
+        this.instancedGroups.mountains = this.createDetailedMountainMesh(mountainSpawns);
+        this.instancedGroups.gold = this.createDetailedGoldMineMesh(goldSpawns);
+        this.instancedGroups.farms = this.createDetailedFarmMesh(farmSpawns);
+        this.instancedGroups.lumber = this.createDetailedLumberMesh(lumberSpawns);
+        this.instancedGroups.quarry = this.createDetailedQuarryMesh(quarrySpawns);
+        this.instancedGroups.pines = this.createCompoundPineMesh(pineSpawns);
+        this.instancedGroups.oaks = this.createCompoundOakMesh(oakSpawns);
+        this.instancedGroups.palms = this.createDetailedPalmMesh(palmSpawns);
+        this.instancedGroups.rocks = this.createDetailedRockMesh(rockSpawns);
+
+        for (const key in this.instancedGroups) {
+          if (this.instancedGroups[key]) {
+            this.scene.add(this.instancedGroups[key]);
+          }
+        }
+      }
+
+      /* ── Compound 3D Models with visible trunks & clean geometry ── */
+      createCompoundPineMesh(spawns) {
+        if (!spawns.length) return null;
+
+        // Concatenate Trunk + 2-Tier Foliage into single BufferGeometry
+        const trunkGeom = new THREE.CylinderGeometry(0.18, 0.24, 1.2, 5).translate(0, 0.6, 0);
+        const f1Geom = new THREE.ConeGeometry(1.2, 2.0, 5).translate(0, 1.8, 0);
+        const f2Geom = new THREE.ConeGeometry(0.9, 1.6, 5).translate(0, 2.6, 0);
+
+        const merged = this.mergeGeomsWithColors(
+          [trunkGeom, f1Geom, f2Geom],
+          [new THREE.Color(0x6e4726), new THREE.Color(0x1e5024), new THREE.Color(0x27632e)]
+        );
+
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.8,
+          flatShading: true
+        });
+
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        instMesh.receiveShadow = true;
+
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 1.3) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createCompoundOakMesh(spawns) {
+        if (!spawns.length) return null;
+
+        const trunkGeom = new THREE.CylinderGeometry(0.24, 0.32, 1.4, 5).translate(0, 0.7, 0);
+        const canopyGeom = new THREE.DodecahedronGeometry(1.3, 1).translate(0, 2.0, 0);
+
+        const merged = this.mergeGeomsWithColors(
+          [trunkGeom, canopyGeom],
+          [new THREE.Color(0x6e4726), new THREE.Color(0x429e3a)]
+        );
+
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.8,
+          flatShading: true
+        });
+
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        instMesh.receiveShadow = true;
+
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 0.8) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      mergeGeomsWithColors(geometries, colors) {
+        let totalVertices = 0;
+        const nonIndexedGeoms = [];
+        for (const g of geometries) {
+          const ni = g.index ? g.toNonIndexed() : g;
+          nonIndexedGeoms.push(ni);
+          totalVertices += ni.attributes.position.count;
+        }
+
+        const posArr = new Float32Array(totalVertices * 3);
+        const normArr = new Float32Array(totalVertices * 3);
+        const colArr = new Float32Array(totalVertices * 3);
+
+        let offset = 0;
+        for (let k = 0; k < nonIndexedGeoms.length; k++) {
+          const g = nonIndexedGeoms[k];
+          const pos = g.attributes.position;
+          const norm = g.attributes.normal;
+          const col = colors[k];
+
+          for (let i = 0; i < pos.count; i++) {
+            const idx = offset + i;
+            posArr[idx * 3 + 0] = pos.getX(i);
+            posArr[idx * 3 + 1] = pos.getY(i);
+            posArr[idx * 3 + 2] = pos.getZ(i);
+
+            if (norm) {
+              normArr[idx * 3 + 0] = norm.getX(i);
+              normArr[idx * 3 + 1] = norm.getY(i);
+              normArr[idx * 3 + 2] = norm.getZ(i);
+            }
+            colArr[idx * 3 + 0] = col.r;
+            colArr[idx * 3 + 1] = col.g;
+            colArr[idx * 3 + 2] = col.b;
+          }
+          offset += pos.count;
+        }
+
+        const merged = new THREE.BufferGeometry();
+        merged.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+        merged.setAttribute('normal', new THREE.BufferAttribute(normArr, 3));
+        merged.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+        return merged;
+      }
+
+      createDetailedMountainMesh(spawns) {
+        if (!spawns.length) return null;
+        // Faceted 3D mountain peak with snowy summit
+        const geom = new THREE.ConeGeometry(4.0, 10.5, 6).toNonIndexed();
+        geom.translate(0, 5.25, 0);
+
+        const count = geom.attributes.position.count;
+        const colors = new Float32Array(count * 3);
+        const rockCol = new THREE.Color(0x565c66);
+        const snowCol = new THREE.Color(0xf0f4f8);
+
+        for (let i = 0; i < count; i++) {
+          const y = geom.attributes.position.getY(i);
+          const col = (y > 7.2) ? snowCol : rockCol;
+          colors[i * 3 + 0] = col.r;
+          colors[i * 3 + 1] = col.g;
+          colors[i * 3 + 2] = col.b;
+        }
+        geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.9,
+          flatShading: true
+        });
+
+        const instMesh = new THREE.InstancedMesh(geom, mat, spawns.length);
+        instMesh.castShadow = true;
+        instMesh.receiveShadow = true;
+
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale * 1.15, sp.scale);
+          dummy.rotation.y = sp.rotY;
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedGoldMineMesh(spawns) {
+        if (!spawns.length) return null;
+        // Shimmering natural gold crystal cluster
+        const c1 = new THREE.DodecahedronGeometry(1.2, 0).translate(0, 0.7, 0);
+        const c2 = new THREE.ConeGeometry(0.65, 1.3, 5).translate(0.5, 0.9, 0.3);
+        const merged = this.mergeGeomsWithColors(
+          [c1, c2],
+          [new THREE.Color(0xf5b041), new THREE.Color(0xffd700)]
+        );
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.3,
+          metalness: 0.82,
+          flatShading: true
+        });
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 0.9) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedFarmMesh(spawns) {
+        if (!spawns.length) return null;
+        // Charming rustic windmill / harvest granary
+        const baseGeom = new THREE.CylinderGeometry(0.9, 1.15, 1.2, 6).translate(0, 0.6, 0);
+        const roofGeom = new THREE.ConeGeometry(1.3, 1.1, 6).translate(0, 1.75, 0);
+        const merged = this.mergeGeomsWithColors(
+          [baseGeom, roofGeom],
+          [new THREE.Color(0xd4af6a), new THREE.Color(0xa65e2e)]
+        );
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.8,
+          flatShading: true
+        });
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 0.5) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedLumberMesh(spawns) {
+        if (!spawns.length) return null;
+        // Stack of natural timber logs (NO plain box)
+        const log1 = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 6).rotateZ(Math.PI / 2).translate(0, 0.3, -0.3);
+        const log2 = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 6).rotateZ(Math.PI / 2).translate(0, 0.3, 0.3);
+        const log3 = new THREE.CylinderGeometry(0.28, 0.28, 1.8, 6).rotateZ(Math.PI / 2).translate(0, 0.75, 0);
+        const merged = this.mergeGeomsWithColors(
+          [log1, log2, log3],
+          [new THREE.Color(0x734824), new THREE.Color(0x613b1c), new THREE.Color(0x85542a)]
+        );
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.85,
+          flatShading: true
+        });
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 0.8) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedQuarryMesh(spawns) {
+        if (!spawns.length) return null;
+        // Natural clustered rock quarry boulders (NO plain box)
+        const rock1 = new THREE.DodecahedronGeometry(1.2, 0).translate(-0.4, 0.6, 0.2);
+        const rock2 = new THREE.DodecahedronGeometry(0.85, 0).translate(0.5, 0.45, -0.2);
+        const merged = this.mergeGeomsWithColors(
+          [rock1, rock2],
+          [new THREE.Color(0x666d78), new THREE.Color(0x4a5059)]
+        );
+        const mat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.92,
+          flatShading: true
+        });
+        const instMesh = new THREE.InstancedMesh(merged, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale, sp.scale);
+          dummy.rotation.y = (i * 0.6) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedPalmMesh(spawns) {
+        if (!spawns.length) return null;
+        const geom = new THREE.CylinderGeometry(0.35, 0.45, 3.0, 5);
+        geom.translate(0, 1.5, 0);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0x48bb78,
+          roughness: 0.9
+        });
+        const instMesh = new THREE.InstancedMesh(geom, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale, sp.scale * 1.2, sp.scale);
+          dummy.rotation.y = (i * 0.4) % (Math.PI * 2);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      createDetailedRockMesh(spawns) {
+        if (!spawns.length) return null;
+        const geom = new THREE.DodecahedronGeometry(1.1, 0);
+        geom.translate(0, 0.55, 0);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0x585d66,
+          roughness: 0.95
+        });
+        const instMesh = new THREE.InstancedMesh(geom, mat, spawns.length);
+        instMesh.castShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < spawns.length; i++) {
+          const sp = spawns[i];
+          dummy.position.set(sp.x, 0, sp.z);
+          dummy.scale.set(sp.scale * (0.8 + Math.random() * 0.4), sp.scale * 0.85, sp.scale);
+          dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+          dummy.updateMatrix();
+          instMesh.setMatrixAt(i, dummy.matrix);
+        }
+        instMesh.instanceMatrix.needsUpdate = true;
+        return instMesh;
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         7. TACTICAL MINIMAP RENDERING
+      ───────────────────────────────────────────────────────────── */
+      generateMinimapTexture() {
+        const mw = this.minimapCanvas.width;
+        const mh = this.minimapCanvas.height;
+        const imgData = this.minimapCtx.createImageData(mw, mh);
+        const data = imgData.data;
+
+        for (let py = 0; py < mh; py++) {
+          for (let px = 0; px < mw; px++) {
+            const wx = (px / mw - 0.5) * MAP_CONFIG.worldSize;
+            const wz = (py / mh - 0.5) * MAP_CONFIG.worldSize;
+
+            const sample = this.generator.sampleBiome(wx, wz);
+            const idx = (py * mw + px) * 4;
+
+            let r = 82, g = 162, b = 50;
+
+            if (sample.isOcean) {
+              r = 22; g = 78; b = 135;
+            } else if (sample.isRiver) {
+              r = 33; g = 120; b = 195;
+            } else if (sample.isBeach || sample.isRiverBank) {
+              r = 218; g = 196; b = 142;
+            } else if (sample.isStoneRoad) {
+              r = 135; g = 138; b = 145;
+            } else if (sample.isDirtRoad) {
+              r = 155; g = 120; b = 76;
+            } else if (sample.isDesert) {
+              r = 235; g = 192; b = 115;
+            } else if (sample.isDirt) {
+              r = 138; g = 95; b = 60;
+            } else if (sample.isMountainZone) {
+              r = 98; g = 104; b = 112;
+            }
+
+            data[idx + 0] = r;
+            data[idx + 1] = g;
+            data[idx + 2] = b;
+            data[idx + 3] = 255;
+          }
+        }
+        this.minimapBgData = imgData;
+        this.drawMinimap();
+      }
+
+      drawMinimap() {
+        if (!this.minimapBgData) return;
+        this.minimapCtx.putImageData(this.minimapBgData, 0, 0);
+
+        const mw = this.minimapCanvas.width;
+        const mh = this.minimapCanvas.height;
+        const half = MAP_CONFIG.worldSize / 2;
+
+        const camMx = ((this.camTarget.x + half) / MAP_CONFIG.worldSize) * mw;
+        const camMy = ((this.camTarget.z + half) / MAP_CONFIG.worldSize) * mh;
+
+        this.minimapCtx.strokeStyle = '#f5c84c';
+        this.minimapCtx.lineWidth = 2;
+        this.minimapCtx.strokeRect(camMx - 12, camMy - 9, 24, 18);
+
+        this.minimapCtx.fillStyle = '#ff3333';
+        this.minimapCtx.beginPath();
+        this.minimapCtx.arc(camMx, camMy, 2.5, 0, Math.PI * 2);
+        this.minimapCtx.fill();
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         8. RTS CONTROLLER & SMOOTH NAVIGATION
+      ───────────────────────────────────────────────────────────── */
+      setupEventListeners() {
+        window.addEventListener('resize', () => {
+          this.camera.aspect = window.innerWidth / window.innerHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Mouse Down (Drag Pan)
+        this.canvas.addEventListener('mousedown', (e) => {
+          this.isDragging = true;
+          this.previousMouse.x = e.clientX;
+          this.previousMouse.y = e.clientY;
+          this.canvas.classList.add('grabbing');
+        });
+
+        window.addEventListener('mouseup', () => {
+          this.isDragging = false;
+          this.canvas.classList.remove('grabbing');
+        });
+
+        this.canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Mouse Move (Natural Pan)
+        this.canvas.addEventListener('mousemove', (e) => {
+          if (this.isDragging) {
+            const dx = e.clientX - this.previousMouse.x;
+            const dy = e.clientY - this.previousMouse.y;
+
+            const cosYaw = Math.cos(this.camYaw);
+            const sinYaw = Math.sin(this.camYaw);
+            const panSpeed = this.camDistance * 0.0016;
+
+            const moveX = (-dx * cosYaw - dy * sinYaw) * panSpeed;
+            const moveZ = (dx * sinYaw - dy * cosYaw) * panSpeed;
+
+            this.targetCamTarget.x += moveX;
+            this.targetCamTarget.z += moveZ;
+
+            const half = MAP_CONFIG.worldSize / 2;
+            this.targetCamTarget.x = Math.max(-half, Math.min(half, this.targetCamTarget.x));
+            this.targetCamTarget.z = Math.max(-half, Math.min(half, this.targetCamTarget.z));
+
+            this.previousMouse.x = e.clientX;
+            this.previousMouse.y = e.clientY;
+          }
+
+          this.updateMouseHoverCoordinates(e);
+        });
+
+        // Zoom (Scroll Wheel)
+        window.addEventListener('wheel', (e) => {
+          const zoomDelta = e.deltaY * 0.08;
+          this.targetCamDistance = Math.max(30, Math.min(220, this.targetCamDistance + zoomDelta));
+        }, { passive: true });
+
+        // Touch Support
+        let initialTouchDist = 0;
+        this.canvas.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            this.isDragging = true;
+            this.previousMouse.x = e.touches[0].clientX;
+            this.previousMouse.y = e.touches[0].clientY;
+          } else if (e.touches.length === 2) {
+            this.isDragging = false;
+            initialTouchDist = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+          }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          if (e.touches.length === 1 && this.isDragging) {
+            const dx = e.touches[0].clientX - this.previousMouse.x;
+            const dy = e.touches[0].clientY - this.previousMouse.y;
+
+            const cosYaw = Math.cos(this.camYaw);
+            const sinYaw = Math.sin(this.camYaw);
+            const panSpeed = this.camDistance * 0.0016;
+
+            const moveX = (-dx * cosYaw - dy * sinYaw) * panSpeed;
+            const moveZ = (dx * sinYaw - dy * cosYaw) * panSpeed;
+
+            this.targetCamTarget.x += moveX;
+            this.targetCamTarget.z += moveZ;
+
+            this.previousMouse.x = e.touches[0].clientX;
+            this.previousMouse.y = e.touches[0].clientY;
+          } else if (e.touches.length === 2) {
+            const currentDist = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+            const zoomDelta = (initialTouchDist - currentDist) * 0.45;
+            this.targetCamDistance = Math.max(30, Math.min(220, this.targetCamDistance + zoomDelta));
+            initialTouchDist = currentDist;
+          }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', () => {
+          this.isDragging = false;
+        });
+
+        // Click Selection
+        this.canvas.addEventListener('click', (e) => {
+          const moveDist = Math.hypot(e.clientX - this.previousMouse.x, e.clientY - this.previousMouse.y);
+          if (moveDist < 6) {
+            this.handleRaycastSelect(e);
+          }
+        });
+
+        // Double Click to Focus
+        this.canvas.addEventListener('dblclick', (e) => {
+          this.mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+          this.mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+          this.raycaster.setFromCamera(this.mousePos, this.camera);
+          if (this.groundMesh) {
+            const intersects = this.raycaster.intersectObject(this.groundMesh);
+            if (intersects.length > 0) {
+              const pt = intersects[0].point;
+              this.flyTo(pt.x, pt.z);
+              this.targetCamDistance = Math.max(45, this.targetCamDistance * 0.7);
+            }
+          }
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+          this.keys[e.code] = true;
+          if (e.code === 'KeyR') {
+            document.getElementById('btn-random-seed').click();
+          }
+        });
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.code] = false;
+        });
+
+        // Minimap Navigation
+        const handleMinimapNav = (e) => {
+          const rect = this.minimapCanvas.getBoundingClientRect();
+          const mx = e.clientX - rect.left;
+          const my = e.clientY - rect.top;
+          const mw = this.minimapCanvas.width;
+          const mh = this.minimapCanvas.height;
+
+          const wx = (mx / mw - 0.5) * MAP_CONFIG.worldSize;
+          const wz = (my / mh - 0.5) * MAP_CONFIG.worldSize;
+
+          this.flyTo(wx, wz);
+          audio.playClick();
+        };
+
+        this.minimapCanvas.addEventListener('mousedown', (e) => {
+          handleMinimapNav(e);
+          const onMove = (ev) => handleMinimapNav(ev);
+          const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+          };
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        });
+
+        // UI Rotation & Zoom Buttons
+        document.getElementById('btn-rot-left').addEventListener('click', () => {
+          this.targetCamYaw -= Math.PI / 8;
+          audio.playClick();
+        });
+
+        document.getElementById('btn-rot-right').addEventListener('click', () => {
+          this.targetCamYaw += Math.PI / 8;
+          audio.playClick();
+        });
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+          this.targetCamDistance = Math.max(30, this.targetCamDistance - 25);
+          audio.playClick();
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+          this.targetCamDistance = Math.min(220, this.targetCamDistance + 25);
+          audio.playClick();
+        });
+
+        document.getElementById('btn-apply-seed').addEventListener('click', () => {
+          const s = document.getElementById('seed-input').value;
+          audio.playClick();
+          this.buildWorld(s);
+        });
+
+        document.getElementById('btn-random-seed').addEventListener('click', () => {
+          const rnd = Math.floor(Math.random() * 900000) + 10000;
+          document.getElementById('seed-input').value = rnd;
+          audio.playClick();
+          this.buildWorld(rnd);
+        });
+
+        document.getElementById('btn-server-state').addEventListener('click', () => {
+          this.openServerStateModal();
+        });
+
+        document.getElementById('btn-close-modal').addEventListener('click', () => {
+          document.getElementById('server-modal').classList.remove('open');
+        });
+
+        document.getElementById('btn-copy-json').addEventListener('click', () => {
+          const txt = document.getElementById('server-json-output');
+          txt.select();
+          navigator.clipboard.writeText(txt.value);
+          const btn = document.getElementById('btn-copy-json');
+          btn.textContent = '✅ Kopyalandı!';
+          setTimeout(() => btn.textContent = '📋 JSON Kopyala', 1800);
+        });
+
+        document.getElementById('btn-goto').addEventListener('click', () => {
+          const gx = parseFloat(document.getElementById('inp-x').value) || 0;
+          const gy = parseFloat(document.getElementById('inp-y').value) || 0;
+          this.flyTo(gx, gy);
+          audio.playClick();
+        });
+
+        document.getElementById('btn-reset-cam').addEventListener('click', () => {
+          this.flyTo(0, 0);
+          this.targetCamYaw = Math.PI / 4;
+          audio.playClick();
+        });
+
+        document.getElementById('btn-toggle-daynight').addEventListener('click', () => {
+          this.toggleDayNight();
+          audio.playClick();
+        });
+
+        document.getElementById('btn-audio').addEventListener('click', () => {
+          audio.enabled = !audio.enabled;
+          document.getElementById('btn-audio').textContent = audio.enabled ? '🔊' : '🔇';
+        });
+
+        document.getElementById('insp-close').addEventListener('click', () => {
+          document.getElementById('inspector-panel').classList.remove('show');
+        });
+
+        // Inspector Actions
+        document.getElementById('insp-btn-focus').addEventListener('click', () => {
+          const targetCoords = document.getElementById('insp-coords').textContent;
+          const coordsMatch = targetCoords.match(/X:\s*(-?\d+),\s*Y:\s*(-?\d+)/);
+          if (coordsMatch) {
+            const tx = parseFloat(coordsMatch[1]);
+            const tz = parseFloat(coordsMatch[2]);
+            this.flyTo(tx, tz);
+            this.targetCamDistance = Math.max(45, this.targetCamDistance * 0.7);
+            audio.playClick();
+          }
+        });
+
+        document.getElementById('insp-btn-bookmark').addEventListener('click', () => {
+          audio.playClick();
+          alert('⭐ Ərazi koordinatları yaddaşa əlavə edildi!');
+        });
+
+        document.getElementById('insp-btn-copy-loc').addEventListener('click', () => {
+          const targetCoords = document.getElementById('insp-coords').textContent;
+          navigator.clipboard.writeText(targetCoords);
+          audio.playClick();
+          const btn = document.getElementById('insp-btn-copy-loc');
+          btn.textContent = '✅ Kopyalandı';
+          setTimeout(() => btn.textContent = '📋 Kopyala', 1500);
+        });
+      }
+
+      flyTo(x, z) {
+        this.targetCamTarget.set(x, 0, z);
+      }
+
+      toggleDayNight() {
+        this.timeOfDay = (this.timeOfDay + 1) % 3;
+        const btn = document.getElementById('btn-toggle-daynight');
+        if (this.timeOfDay === 0) { // Day
+          btn.textContent = '☀️';
+          this.scene.background.setHex(0x87ceeb);
+          this.scene.fog.color.setHex(0xa8d4f0);
+          this.sunLight.color.setHex(0xfff8e7);
+          this.sunLight.intensity = 1.35;
+          this.ambientLight.color.setHex(0xe8f0fe);
+          this.ambientLight.intensity = 0.78;
+        } else if (this.timeOfDay === 1) { // Sunset
+          btn.textContent = '🌅';
+          this.scene.background.setHex(0x4a2838);
+          this.scene.fog.color.setHex(0x6e3b4a);
+          this.sunLight.color.setHex(0xff7744);
+          this.sunLight.intensity = 1.15;
+          this.ambientLight.color.setHex(0x5c4250);
+          this.ambientLight.intensity = 0.55;
+        } else { // Night
+          btn.textContent = '🌙';
+          this.scene.background.setHex(0x070913);
+          this.scene.fog.color.setHex(0x0e1322);
+          this.sunLight.color.setHex(0x6688cc);
+          this.sunLight.intensity = 0.45;
+          this.ambientLight.color.setHex(0x223355);
+          this.ambientLight.intensity = 0.35;
+        }
+      }
+
+      updateMouseHoverCoordinates(e) {
+        this.mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mousePos, this.camera);
+        if (this.groundMesh) {
+          const intersects = this.raycaster.intersectObject(this.groundMesh);
+          if (intersects.length > 0) {
+            const pt = intersects[0].point;
+            const sample = this.generator.sampleBiome(pt.x, pt.z);
+            document.getElementById('current-coords').textContent = `X: ${Math.round(pt.x)} | Y: ${Math.round(pt.z)}`;
+            document.getElementById('current-biome').textContent = sample.biome;
+          }
+        }
+      }
+
+      handleRaycastSelect(e) {
+        this.mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mousePos, this.camera);
+        if (!this.groundMesh) return;
+
+        const intersects = this.raycaster.intersectObject(this.groundMesh);
+        if (intersects.length > 0) {
+          const pt = intersects[0].point;
+          audio.playSelect();
+
+          let foundEntity = null;
+          let minEntityDist = 6.0;
+
+          if (this.generator && this.generator.entities) {
+            for (const ent of this.generator.entities) {
+              const d = Math.hypot(pt.x - ent.x, pt.z - ent.z);
+              if (d < minEntityDist) {
+                minEntityDist = d;
+                foundEntity = ent;
+              }
+            }
+          }
+
+          const sample = this.generator.sampleBiome(pt.x, pt.z);
+          this.showInspectorCard(pt, sample, foundEntity);
+        }
+      }
+
+      showInspectorCard(worldPt, sample, entity) {
+        const panel = document.getElementById('inspector-panel');
+        const icon = document.getElementById('insp-icon');
+        const title = document.getElementById('insp-title');
+        const sub = document.getElementById('insp-subtitle');
+        const coords = document.getElementById('insp-coords');
+        const biome = document.getElementById('insp-biome');
+        const s1L = document.getElementById('insp-stat1-lbl');
+        const s1V = document.getElementById('insp-stat1-val');
+        const s2L = document.getElementById('insp-stat2-lbl');
+        const s2V = document.getElementById('insp-stat2-val');
+
+        coords.textContent = `X: ${Math.round(worldPt.x)}, Y: ${Math.round(worldPt.z)}`;
+        biome.textContent = sample.biome;
+
+        if (entity) {
+          title.textContent = entity.name;
+          if (entity.type === 'GOLD_MINE') {
+            icon.textContent = '💰';
+            sub.textContent = `Təbii Qızıl Yatağı • Səviyyə ${entity.level}`;
+            s1L.textContent = 'Ehtiyat';
+            s1V.textContent = (entity.level * 180000).toLocaleString() + ' Qızıl Filizi';
+            s1V.style.color = '#f5c84c';
+            s2L.textContent = 'Tip';
+            s2V.textContent = 'Təbii Filiz Damarı';
+            s2V.style.color = '#68d391';
+          } else if (entity.type === 'FARM') {
+            icon.textContent = '🌾';
+            sub.textContent = `Bərəkətli Düzənlik Ferması • Səviyyə ${entity.level}`;
+            s1L.textContent = 'Məhsul';
+            s1V.textContent = (entity.level * 250000).toLocaleString() + ' Taxıl';
+            s1V.style.color = '#93c54b';
+            s2L.textContent = 'Torpaq Tipi';
+            s2V.textContent = 'Münbit Qara Torpaq';
+            s2V.style.color = '#68d391';
+          } else if (entity.type === 'LUMBER') {
+            icon.textContent = '🪵';
+            sub.textContent = `Meşə Odunçuluq Sahəsi • Səviyyə ${entity.level}`;
+            s1L.textContent = 'Odun';
+            s1V.textContent = (entity.level * 200000).toLocaleString() + ' Taxta';
+            s1V.style.color = '#a56829';
+            s2L.textContent = 'Zonası';
+            s2V.textContent = 'Qədim Meşəlik';
+            s2V.style.color = '#68d391';
+          } else {
+            icon.textContent = '⛏️';
+            sub.textContent = `Təbii Daş Karxanası • Səviyyə ${entity.level}`;
+            s1L.textContent = 'Daş Ehtiyatı';
+            s1V.textContent = (entity.level * 220000).toLocaleString() + ' Qranit';
+            s1V.style.color = '#a0aec0';
+            s2L.textContent = 'Tip';
+            s2V.textContent = 'Dağ Ətəyi Qaya';
+            s2V.style.color = '#68d391';
+          }
+        } else {
+          icon.textContent = sample.isRiver ? '💧' : (sample.isDesert ? '🏜️' : (sample.isStoneRoad ? '🛣️' : (sample.isMountainZone ? '⛰️' : '🌲')));
+          title.textContent = sample.biome;
+          sub.textContent = 'Təbii Krallıq Zonası';
+          s1L.textContent = 'Relyef';
+          s1V.textContent = sample.isMountainZone ? 'Qayalıq Silsilə' : 'Düz Zəmin (2D)';
+          s1V.style.color = '#68d391';
+          s2L.textContent = 'Hərəkət Bonusu';
+          s2V.textContent = sample.isStoneRoad ? '150% (Yol Bonusu)' : (sample.isMountainZone ? '70% (Qayalıq)' : '100% (Normal)');
+          s2V.style.color = sample.isStoneRoad ? '#68d391' : '#f5c84c';
+        }
+
+        panel.classList.add('show');
+      }
+
+      openServerStateModal() {
+        const modal = document.getElementById('server-modal');
+        const txt = document.getElementById('server-json-output');
+
+        const serverData = {
+          game: 'Lords Realm 3D',
+          serverCreated: true,
+          serverSeed: this.seed,
+          castlesVisible: false,
+          groundType: 'Flat 2D Plane with 2048x2048 Crisp Canvas Texture (Ultra Sharp, No Blur)',
+          colorVariations: 'Procedural Seed-based Color Variations for Grasslands, Desert, and Soil',
+          objectsType: 'Clean Spaced 3D Props (Mountains, Natural Mines, Trees with Trunks, Boulders)',
+          worldDimensions: {
+            width: MAP_CONFIG.worldSize,
+            height: MAP_CONFIG.worldSize
+          },
+          biomesDistribution: {
+            dominant: 'Lush Grasslands with Variable Tints (Münbit Yaşıllıq > 68%)',
+            singleRiver: 'Seed-Driven Procedural River (Seed dəyişdikdə çayın yeri dəyişir)',
+            roads: 'Stone pavers & Dirt paths (Daş və Torpaq Yollar)',
+            desert: 'Səhralıq & Qumluq (Rəng dəyişkənliyi ilə)',
+            dirt: 'Torpaq sahələri (Qonur, gil və torf rəngləri ilə)',
+            mountains: '3D Snow-capped Granite peaks & Rock boulders (Səliqəli yerləşdirilmiş)'
+          },
+          sampleEntities: (this.generator.entities || []).slice(0, 15),
+          stabilityGuarantee: 'Server yarandıqdan sonra bu Seed sabit qaldıqca xəritədəki çay, dağlar, yollar, rənglər və resurslar tam olaraq eyni koordinatda qalır.'
+        };
+
+        txt.value = JSON.stringify(serverData, null, 2);
+        modal.classList.add('open');
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         9. ANIMATION LOOP & SMOOTH INTERPOLATION
+      ───────────────────────────────────────────────────────────── */
+      updateCameraPosition() {
+        const lerpFactor = 0.085;
+        this.camTarget.lerp(this.targetCamTarget, lerpFactor);
+        this.camDistance += (this.targetCamDistance - this.camDistance) * lerpFactor;
+        this.camYaw += (this.targetCamYaw - this.camYaw) * lerpFactor;
+
+        const height = this.camDistance * Math.sin(this.camPitch);
+        const groundRadius = this.camDistance * Math.cos(this.camPitch);
+
+        const x = this.camTarget.x + groundRadius * Math.sin(this.camYaw);
+        const y = this.camTarget.y + height;
+        const z = this.camTarget.z + groundRadius * Math.cos(this.camYaw);
+
+        this.camera.position.set(x, y, z);
+        this.camera.lookAt(this.camTarget);
+      }
+
+      updateKeyboard() {
+        const speed = (this.camDistance / 70.0) * 0.45;
+        const cosYaw = Math.cos(this.camYaw);
+        const sinYaw = Math.sin(this.camYaw);
+
+        const fwdX = -sinYaw;
+        const fwdZ = -cosYaw;
+        const rgtX = cosYaw;
+        const rgtZ = -sinYaw;
+
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) {
+          this.targetCamTarget.x += fwdX * speed;
+          this.targetCamTarget.z += fwdZ * speed;
+        }
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) {
+          this.targetCamTarget.x -= fwdX * speed;
+          this.targetCamTarget.z -= fwdZ * speed;
+        }
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+          this.targetCamTarget.x -= rgtX * speed;
+          this.targetCamTarget.z -= rgtZ * speed;
+        }
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+          this.targetCamTarget.x += rgtX * speed;
+          this.targetCamTarget.z += rgtZ * speed;
+        }
+
+        if (this.keys['KeyQ']) this.targetCamYaw -= 0.025;
+        if (this.keys['KeyE']) this.targetCamYaw += 0.025;
+
+        const half = MAP_CONFIG.worldSize / 2;
+        this.targetCamTarget.x = Math.max(-half, Math.min(half, this.targetCamTarget.x));
+        this.targetCamTarget.z = Math.max(-half, Math.min(half, this.targetCamTarget.z));
+      }
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const now = performance.now();
+        this.frameCount++;
+        if (now - this.fpsTimer >= 1000) {
+          const fps = Math.round((this.frameCount * 1000) / (now - this.fpsTimer));
+          document.getElementById('fps-counter').textContent = `${fps} FPS`;
+          this.frameCount = 0;
+          this.fpsTimer = now;
+        }
+
+        this.updateKeyboard();
+        this.updateCameraPosition();
+        this.drawMinimap();
+
+        this.renderer.render(this.scene, this.camera);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const realm = new RealmEngine('webgl-canvas');
+      realm.init();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔ Realm of Oyunn ⚔</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --bg: #0e0c1a;
+      --panel: rgba(16, 13, 28, .94);
+      --gold: #c9a84c;
+      --gold-dim: #8a7234;
+      --gold-glow: rgba(201, 168, 76, .25);
+      --text: #e0d5c0;
+      --text-dim: #8a7e6a;
+      --border: rgba(201, 168, 76, .35);
+      --danger: #a83232;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'MedievalSharp', 'Georgia', 'Palatino Linotype', serif;
+      color: var(--text);
+      user-select: none;
+      -webkit-user-select: none
+    }
+
+    canvas#main {
+      display: block;
+      cursor: grab;
+      position: absolute;
+      top: 0;
+      left: 0
+    }
+
+    canvas#main.grabbing {
+      cursor: grabbing
+    }
+
+    /* ── Loading Overlay ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      gap: 18px
+    }
+
+    #loading h1 {
+      font-size: 28px;
+      color: var(--gold);
+      text-shadow: 0 0 20px var(--gold-glow);
+      letter-spacing: 3px
+    }
+
+    #loading .bar-track {
+      width: 320px;
+      height: 10px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      overflow: hidden
+    }
+
+    #loading .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 5px;
+      transition: width .1s
+    }
+
+    #loading .sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 1px
+    }
+
+    /* ── Top Bar ── */
+    #topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      z-index: 100;
+      background: linear-gradient(180deg, rgba(16, 13, 28, .97), rgba(16, 13, 28, .88));
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      gap: 16px
+    }
+
+    #topbar .title {
+      font-size: 18px;
+      color: var(--gold);
+      letter-spacing: 2.5px;
+      text-shadow: 0 0 14px var(--gold-glow);
+      white-space: nowrap
+    }
+
+    #topbar .seed-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-dim)
+    }
+
+    #topbar .seed-ctrl label {
+      letter-spacing: 1px
+    }
+
+    #topbar input {
+      width: 100px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      text-align: center
+    }
+
+    #topbar input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 6px var(--gold-glow)
+    }
+
+    #topbar button {
+      padding: 5px 14px;
+      background: linear-gradient(180deg, rgba(201, 168, 76, .18), rgba(201, 168, 76, .08));
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      color: var(--gold);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all .15s
+    }
+
+    #topbar button:hover {
+      background: rgba(201, 168, 76, .28);
+      border-color: var(--gold);
+      box-shadow: 0 0 8px var(--gold-glow)
+    }
+
+    #topbar .zoom-lbl {
+      font-size: 12px;
+      color: var(--text-dim);
+      min-width: 70px;
+      text-align: right
+    }
+
+    /* ── Minimap ── */
+    #minimap-wrap {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 100;
+      border: 2px solid var(--gold-dim);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, .6), inset 0 0 12px rgba(201, 168, 76, .08);
+      background: var(--panel)
+    }
+
+    #minimap-wrap .label {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      color: var(--gold-dim);
+      letter-spacing: 2px;
+      pointer-events: none;
+      z-index: 1;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .8)
+    }
+
+    canvas#minimap {
+      display: block;
+      cursor: pointer
+    }
+
+    /* ── Coordinates ── */
+    #coords {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 100;
+      padding: 6px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      pointer-events: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .4)
+    }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      z-index: 200;
+      display: none;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(18, 14, 30, .96), rgba(22, 18, 35, .96));
+      border: 1px solid var(--gold-dim);
+      border-radius: 6px;
+      pointer-events: none;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .6);
+      min-width: 140px;
+      max-width: 240px
+    }
+
+    #tooltip .tt-title {
+      font-size: 14px;
+      color: var(--gold);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    #tooltip .tt-body {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5
+    }
+
+    #tooltip .tt-coord {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      opacity: .7
+    }
+
+    /* ── Help ── */
+    #help {
+      position: fixed;
+      top: 56px;
+      right: 16px;
+      z-index: 100;
+      padding: 8px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      letter-spacing: .5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .4)
+    }
+
+    #help kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 10px;
+      color: var(--text)
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading -->
+  <div id="loading">
+    <h1>⚔ Forging the Realm ⚔</h1>
+    <div class="bar-track">
+      <div class="bar-fill" id="load-bar"></div>
+    </div>
+    <div class="sub" id="load-text">Initializing...</div>
+  </div>
+
+  <!-- Main Canvas -->
+  <canvas id="main"></canvas>
+
+  <!-- Top Bar -->
+  <div id="topbar" style="display:none">
+    <div class="title">⚔ Realm of Oyunn</div>
+    <div class="seed-ctrl">
+      <label>SEED</label>
+      <input id="seed-input" type="text" value="42">
+      <button id="btn-gen">Generate</button>
+      <span class="zoom-lbl" id="zoom-lbl">100%</span>
+    </div>
+  </div>
+
+  <!-- Minimap -->
+  <div id="minimap-wrap" style="display:none">
+    <div class="label">WORLD MAP</div>
+    <canvas id="minimap" width="200" height="200"></canvas>
+  </div>
+
+  <!-- Coords -->
+  <div id="coords" style="display:none">—</div>
+
+  <!-- Tooltip -->
+  <div id="tooltip">
+    <div class="tt-title"></div>
+    <div class="tt-body"></div>
+    <div class="tt-coord"></div>
+  </div>
+
+  <!-- Help -->
+  <div id="help" style="display:none">
+    <kbd>Drag</kbd> Pan &nbsp; <kbd>Scroll</kbd> Zoom &nbsp; <kbd>WASD</kbd> Move &nbsp; <kbd>R</kbd> Random seed
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    //  CONSTANTS
+    // ═══════════════════════════════════════════
+    const W = 1600;                // world size in tiles
+    const TILE_PX = 32;            // base pixels-per-tile at zoom=1
+    const MIN_ZOOM = 0.6;          // px per tile at min zoom
+    const MAX_ZOOM = 52;           // px per tile at max zoom
+    const DEFAULT_ZOOM = 6;        // initial px per tile
+    const MINIMAP_SIZE = 200;
+
+    // Biome enum
+    const B = Object.freeze({
+      DEEP_SEA: 0, SHALLOW_SEA: 1, BEACH: 2, GRASS: 3, LIGHT_FOREST: 4,
+      DENSE_FOREST: 5, ROCKY_HILLS: 6, MOUNTAIN: 7, SNOW_PEAK: 8, RIVER: 9, LAKE: 10
+    });
+
+    // Biome colours [r,g,b]
+    const BC = {
+      [B.DEEP_SEA]: [18, 45, 78],
+      [B.SHALLOW_SEA]: [32, 82, 132],
+      [B.BEACH]: [192, 174, 122],
+      [B.GRASS]: [82, 140, 54],
+      [B.LIGHT_FOREST]: [48, 108, 38],
+      [B.DENSE_FOREST]: [30, 74, 26],
+      [B.ROCKY_HILLS]: [122, 115, 95],
+      [B.MOUNTAIN]: [88, 82, 72],
+      [B.SNOW_PEAK]: [218, 225, 232],
+      [B.RIVER]: [42, 108, 158],
+      [B.LAKE]: [36, 94, 148],
+    };
+
+    const BIOME_NAMES = {
+      [B.DEEP_SEA]: 'Deep Ocean', [B.SHALLOW_SEA]: 'Shallow Waters', [B.BEACH]: 'Sandy Shore',
+      [B.GRASS]: 'Grasslands', [B.LIGHT_FOREST]: 'Forest', [B.DENSE_FOREST]: 'Ancient Forest',
+      [B.ROCKY_HILLS]: 'Stone Hills', [B.MOUNTAIN]: 'Mountain', [B.SNOW_PEAK]: 'Frozen Peak',
+      [B.RIVER]: 'River', [B.LAKE]: 'Lake'
+    };
+
+    const BIOME_ICONS = {
+      [B.DEEP_SEA]: '🌊', [B.SHALLOW_SEA]: '🌊', [B.BEACH]: '🏖️',
+      [B.GRASS]: '🌿', [B.LIGHT_FOREST]: '🌲', [B.DENSE_FOREST]: '🌳',
+      [B.ROCKY_HILLS]: '🪨', [B.MOUNTAIN]: '⛰️', [B.SNOW_PEAK]: '🏔️',
+      [B.RIVER]: '💧', [B.LAKE]: '💧'
+    };
+
+    // ═══════════════════════════════════════════
+    //  PRNG  (Mulberry32)
+    // ═══════════════════════════════════════════
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    function seedHash(seed) {
+      if (typeof seed === 'string') { let h = 0; for (let i = 0; i < seed.length; i++) { h = Math.imul(31, h) + seed.charCodeAt(i) | 0; } return h >>> 0; }
+      return (seed | 0) >>> 0;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PERLIN NOISE
+    // ═══════════════════════════════════════════
+    class PerlinNoise {
+      constructor(seed) {
+        const rng = mulberry32(seed);
+        this.p = new Uint8Array(512);
+        this.gx = new Float64Array(256);
+        this.gy = new Float64Array(256);
+        const p = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) p[i] = i;
+        for (let i = 255; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = p[i]; p[i] = p[j]; p[j] = t; }
+        for (let i = 0; i < 256; i++) {
+          this.p[i] = this.p[i + 256] = p[i];
+          const a = rng() * Math.PI * 2;
+          this.gx[i] = Math.cos(a); this.gy[i] = Math.sin(a);
+        }
+      }
+      noise(x, y) {
+        const ix = Math.floor(x) & 255, iy = Math.floor(y) & 255;
+        const fx = x - Math.floor(x), fy = y - Math.floor(y);
+        const u = fx * fx * fx * (fx * (fx * 6 - 15) + 10);
+        const v = fy * fy * fy * (fy * (fy * 6 - 15) + 10);
+        const aa = this.p[this.p[ix] + iy], ba = this.p[this.p[ix + 1] + iy];
+        const ab = this.p[this.p[ix] + (iy + 1)], bb = this.p[this.p[ix + 1] + (iy + 1)];
+        const d00 = this.gx[aa] * fx + this.gy[aa] * fy;
+        const d10 = this.gx[ba] * (fx - 1) + this.gy[ba] * fy;
+        const d01 = this.gx[ab] * fx + this.gy[ab] * (fy - 1);
+        const d11 = this.gx[bb] * (fx - 1) + this.gy[bb] * (fy - 1);
+        const x1 = d00 + u * (d10 - d00), x2 = d01 + u * (d11 - d01);
+        return 0.5 + 0.5 * (x1 + v * (x2 - x1));
+      }
+      fbm(x, y, oct = 6, per = 0.5) {
+        let t = 0, a = 1, m = 0, f = 1;
+        for (let i = 0; i < oct; i++) { t += this.noise(x * f, y * f) * a; m += a; a *= per; f *= 2; }
+        return t / m;
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  UTILITIES
+    // ═══════════════════════════════════════════
+    const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smoothstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    // ═══════════════════════════════════════════
+    //  WORLD STATE
+    // ═══════════════════════════════════════════
+    let worldSeed = 42;
+    let biomes, heightMap, moistureMap, detailMap;
+    let resources;          // Map  "x,y" -> {type, level, icon, color}
+    let overviewCanvas;     // OffscreenCanvas for minimap & extreme zoom-out
+    let minimapImageData;   // cached minimap image
+
+    // ═══════════════════════════════════════════
+    //  CAMERA
+    // ═══════════════════════════════════════════
+    const cam = {
+      x: W / 2, y: W / 2,          // world-space centre
+      zoom: DEFAULT_ZOOM,       // pixels per tile
+      targetZoom: DEFAULT_ZOOM,
+      vx: 0, vy: 0,               // momentum
+    };
+
+    function worldToScreen(wx, wy) {
+      return [
+        (wx - cam.x) * cam.zoom + canvas.width / 2,
+        (wy - cam.y) * cam.zoom + canvas.height / 2
+      ];
+    }
+    function screenToWorld(sx, sy) {
+      return [
+        (sx - canvas.width / 2) / cam.zoom + cam.x,
+        (sy - canvas.height / 2) / cam.zoom + cam.y
+      ];
+    }
+    function visibleRange() {
+      const [wx0, wy0] = screenToWorld(0, 0);
+      const [wx1, wy1] = screenToWorld(canvas.width, canvas.height);
+      return {
+        x0: Math.max(0, Math.floor(wx0) - 1),
+        y0: Math.max(0, Math.floor(wy0) - 1),
+        x1: Math.min(W - 1, Math.ceil(wx1) + 1),
+        y1: Math.min(W - 1, Math.ceil(wy1) + 1),
+      };
+    }
+    function clampCam() {
+      const hw = canvas.width / (2 * cam.zoom), hh = canvas.height / (2 * cam.zoom);
+      if (hw * 2 >= W) cam.x = W / 2; else cam.x = clamp(cam.x, hw, W - hw);
+      if (hh * 2 >= W) cam.y = W / 2; else cam.y = clamp(cam.y, hh, W - hh);
+    }
+
+    // ═══════════════════════════════════════════
+    //  WORLD GENERATION
+    // ═══════════════════════════════════════════
+    async function generateWorld(seed) {
+      const el = document.getElementById('loading');
+      const bar = document.getElementById('load-bar');
+      const txt = document.getElementById('load-text');
+      el.style.display = 'flex';
+
+      worldSeed = seedHash(seed);
+      const nH = new PerlinNoise(worldSeed);
+      const nM = new PerlinNoise(worldSeed + 1);
+      const nD = new PerlinNoise(worldSeed + 2);
+      const nR1 = new PerlinNoise(worldSeed + 3);
+      const nR2 = new PerlinNoise(worldSeed + 4);
+      const nL = new PerlinNoise(worldSeed + 5);
+
+      biomes = new Uint8Array(W * W);
+      heightMap = new Uint8Array(W * W);
+      moistureMap = new Uint8Array(W * W);
+      detailMap = new Uint8Array(W * W);
+
+      txt.textContent = 'Generating terrain…';
+      await sleep(30);
+
+      for (let y = 0; y < W; y++) {
+        for (let x = 0; x < W; x++) {
+          const idx = y * W + x;
+
+          // height
+          let h = nH.fbm(x * 0.0028, y * 0.0028, 6, 0.52);
+
+          // edge falloff for ocean border
+          const edgeDist = Math.min(x, y, W - 1 - x, W - 1 - y);
+          const coastVar = nD.fbm(x * 0.007, y * 0.007, 3, 0.5);
+          const seaBorder = 45 + coastVar * 90;
+          if (edgeDist < seaBorder) {
+            h *= smoothstep(0, 1, edgeDist / seaBorder);
+          }
+
+          // moisture
+          const m = nM.fbm(x * 0.0045, y * 0.0045, 4, 0.5);
+
+          // rivers
+          const rv1 = Math.abs(nR1.fbm(x * 0.005, y * 0.005, 4, 0.48) - 0.5);
+          const rv2 = Math.abs(nR2.fbm(x * 0.0065 + 100, y * 0.003 + 100, 3, 0.5) - 0.5);
+          const isRiver = (rv1 < 0.014 || rv2 < 0.011) && h > 0.16 && h < 0.68;
+
+          // lakes
+          const lk = nL.fbm(x * 0.018, y * 0.018, 3, 0.5);
+          const isLake = lk > 0.74 && h > 0.2 && h < 0.55;
+
+          // detail noise for colour variation
+          const d = nD.fbm(x * 0.025, y * 0.025, 2, 0.5);
+
+          // classify
+          let b;
+          if (h < 0.10) b = B.DEEP_SEA;
+          else if (h < 0.17) b = B.SHALLOW_SEA;
+          else if (h < 0.215) b = B.BEACH;
+          else if (isLake) b = B.LAKE;
+          else if (isRiver) b = B.RIVER;
+          else if (h > 0.84) b = B.SNOW_PEAK;
+          else if (h > 0.72) b = B.MOUNTAIN;
+          else if (h > 0.60) b = B.ROCKY_HILLS;
+          else if (m > 0.60 && h > 0.24) b = B.DENSE_FOREST;
+          else if (m > 0.44 && h > 0.24) b = B.LIGHT_FOREST;
+          else b = B.GRASS;
+
+          biomes[idx] = b;
+          heightMap[idx] = (h * 255) | 0;
+          moistureMap[idx] = (m * 255) | 0;
+          detailMap[idx] = (d * 255) | 0;
+        }
+        if (y % 80 === 0) {
+          bar.style.width = (y / W * 70) + '%';
+          await sleep(0);
+        }
+      }
+
+      // ── Place resources ──
+      txt.textContent = 'Placing resources…'; bar.style.width = '72%'; await sleep(20);
+      placeResources();
+
+      // ── Render overview canvas ──
+      txt.textContent = 'Rendering overview…'; bar.style.width = '80%'; await sleep(20);
+      renderOverviewCanvas();
+
+      // ── Render minimap ──
+      txt.textContent = 'Drawing minimap…'; bar.style.width = '92%'; await sleep(20);
+      renderMinimapImage();
+
+      bar.style.width = '100%'; txt.textContent = 'Ready!'; await sleep(200);
+      el.style.display = 'none';
+
+      // show UI
+      document.getElementById('topbar').style.display = 'flex';
+      document.getElementById('minimap-wrap').style.display = 'block';
+      document.getElementById('coords').style.display = 'block';
+      document.getElementById('help').style.display = 'block';
+    }
+
+    // ── Resource placement ──
+    function placeResources() {
+      resources = new Map();
+      const rng = mulberry32(worldSeed + 77777);
+      const types = {
+        [B.MOUNTAIN]: [
+          { name: 'Gold Mine', icon: '⛏️', color: '#e8c44a', weight: .4 },
+          { name: 'Iron Deposit', icon: '⛏️', color: '#8a9aa8', weight: .4 },
+          { name: 'Dragon Lair', icon: '🐉', color: '#c44', weight: .2 },
+        ],
+        [B.ROCKY_HILLS]: [
+          { name: 'Stone Quarry', icon: '🪨', color: '#a09880', weight: .55 },
+          { name: 'Iron Deposit', icon: '⛏️', color: '#8a9aa8', weight: .35 },
+          { name: 'Bandit Camp', icon: '⚔️', color: '#c44', weight: .1 },
+        ],
+        [B.DENSE_FOREST]: [
+          { name: 'Lumber Camp', icon: '🪓', color: '#6a4a28', weight: .45 },
+          { name: 'Herb Garden', icon: '🌿', color: '#3a8a2a', weight: .3 },
+          { name: 'Monster Den', icon: '💀', color: '#a22', weight: .25 },
+        ],
+        [B.LIGHT_FOREST]: [
+          { name: 'Lumber Camp', icon: '🪓', color: '#6a4a28', weight: .5 },
+          { name: 'Ancient Ruins', icon: '🏛️', color: '#9a8a6a', weight: .3 },
+          { name: 'Herb Garden', icon: '🌿', color: '#3a8a2a', weight: .2 },
+        ],
+        [B.GRASS]: [
+          { name: 'Farm', icon: '🌾', color: '#c8a832', weight: .5 },
+          { name: 'Ancient Ruins', icon: '🏛️', color: '#9a8a6a', weight: .25 },
+          { name: 'Village', icon: '🏘️', color: '#b89a68', weight: .25 },
+        ],
+        [B.SNOW_PEAK]: [
+          { name: 'Crystal Cave', icon: '💎', color: '#88ccee', weight: .6 },
+          { name: 'Frost Wyrm Nest', icon: '🐉', color: '#aaddff', weight: .4 },
+        ],
+      };
+
+      let placed = 0;
+      const maxAttempts = 8000, target = 600;
+      for (let i = 0; i < maxAttempts && placed < target; i++) {
+        const x = (rng() * W) | 0, y = (rng() * W) | 0;
+        const b = biomes[y * W + x];
+        const pool = types[b];
+        if (!pool) continue;
+        const key = x + ',' + y;
+        if (resources.has(key)) continue;
+        // min spacing
+        let tooClose = false;
+        for (let dy = -4; dy <= 4 && !tooClose; dy++) {
+          for (let dx = -4; dx <= 4 && !tooClose; dx++) {
+            if (resources.has((x + dx) + ',' + (y + dy))) tooClose = true;
+          }
+        }
+        if (tooClose) continue;
+
+        let r = rng(), cum = 0, pick = pool[0];
+        for (const p of pool) { cum += p.weight; if (r < cum) { pick = p; break; } }
+        const level = Math.max(1, Math.min(20, ((heightMap[y * W + x] / 255) * 14 + rng() * 6) | 0));
+        resources.set(key, { name: pick.name, icon: pick.icon, color: pick.color, level, x, y });
+        placed++;
+      }
+    }
+
+    // ── Overview canvas (for extreme zoom-out & minimap) ──
+    function renderOverviewCanvas() {
+      overviewCanvas = document.createElement('canvas');
+      overviewCanvas.width = 800; overviewCanvas.height = 800;
+      const ctx = overviewCanvas.getContext('2d');
+      const img = ctx.createImageData(800, 800);
+      const d = img.data;
+      for (let py = 0; py < 800; py++) {
+        for (let px = 0; px < 800; px++) {
+          const tx = (px * W / 800) | 0, ty = (py * W / 800) | 0;
+          const b = biomes[ty * W + tx];
+          const c = BC[b];
+          const det = (detailMap[ty * W + tx] / 255 - 0.5) * 14;
+          const off = (py * 800 + px) * 4;
+          d[off] = clamp(c[0] + det, 0, 255);
+          d[off + 1] = clamp(c[1] + det, 0, 255);
+          d[off + 2] = clamp(c[2] + det, 0, 255);
+          d[off + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    function renderMinimapImage() {
+      const mc = document.getElementById('minimap');
+      const ctx = mc.getContext('2d');
+      ctx.drawImage(overviewCanvas, 0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+      minimapImageData = ctx.getImageData(0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+    }
+
+    // ═══════════════════════════════════════════
+    //  TILE COLOUR (with per-tile noise variation)
+    // ═══════════════════════════════════════════
+    const colCache = new Map();
+    function rgb(r, g, b) {
+      r = r | 0; g = g | 0; b = b | 0;
+      const k = (r << 16) | (g << 8) | b;
+      let s = colCache.get(k);
+      if (!s) { s = `rgb(${r},${g},${b})`; colCache.set(k, s); }
+      return s;
+    }
+
+    function tileColor(tx, ty) {
+      const idx = ty * W + tx;
+      const b = biomes[idx];
+      const c = BC[b];
+      const det = (detailMap[idx] / 255 - 0.5) * 22;
+      const h = (heightMap[idx] / 255 - 0.5) * 10;
+      return rgb(clamp(c[0] + det + h, 0, 255), clamp(c[1] + det * 0.7, 0, 255), clamp(c[2] + det * 0.5 - h * 0.3, 0, 255));
+    }
+
+    // ═══════════════════════════════════════════
+    //  DETERMINISTIC PER-TILE RNG
+    // ═══════════════════════════════════════════
+    function tileRng(tx, ty) {
+      return mulberry32(worldSeed ^ (tx * 374761393 + ty * 668265263));
+    }
+
+    // ═══════════════════════════════════════════
+    //  DECORATION DRAWING
+    // ═══════════════════════════════════════════
+    function drawTree(ctx, sx, sy, sz, type, shade) {
+      if (type < 0.45) {
+        // Conifer
+        ctx.fillStyle = rgb(18 + shade * 12, 58 + shade * 16, 14 + shade * 8);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - sz * 0.48);
+        ctx.lineTo(sx - sz * 0.32, sy + sz * 0.28);
+        ctx.lineTo(sx + sz * 0.32, sy + sz * 0.28);
+        ctx.closePath(); ctx.fill();
+        // darker triangle inside
+        ctx.fillStyle = rgb(14 + shade * 8, 44 + shade * 10, 10 + shade * 5);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - sz * 0.28);
+        ctx.lineTo(sx - sz * 0.18, sy + sz * 0.18);
+        ctx.lineTo(sx + sz * 0.18, sy + sz * 0.18);
+        ctx.closePath(); ctx.fill();
+      } else {
+        // Deciduous
+        const r = sz * 0.3;
+        // shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.beginPath();
+        ctx.arc(sx + sz * 0.06, sy + sz * 0.06, r * 1.05, 0, Math.PI * 2);
+        ctx.fill();
+        // canopy
+        ctx.fillStyle = rgb(28 + shade * 14, 72 + shade * 18, 22 + shade * 10);
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+        // highlight
+        ctx.fillStyle = rgb(42 + shade * 16, 92 + shade * 20, 34 + shade * 12);
+        ctx.beginPath();
+        ctx.arc(sx - r * 0.25, sy - r * 0.3, r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawMountainPeak(ctx, sx, sy, sz, hasSnow, shade) {
+      // left face (lit)
+      ctx.fillStyle = rgb(95 + shade * 12, 88 + shade * 10, 75 + shade * 8);
+      ctx.beginPath();
+      ctx.moveTo(sx - sz * 0.42, sy + sz * 0.36);
+      ctx.lineTo(sx - sz * 0.02, sy - sz * 0.42);
+      ctx.lineTo(sx, sy + sz * 0.36);
+      ctx.closePath(); ctx.fill();
+      // right face (shadow)
+      ctx.fillStyle = rgb(62 + shade * 8, 58 + shade * 6, 50 + shade * 5);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy + sz * 0.36);
+      ctx.lineTo(sx + sz * 0.02, sy - sz * 0.42);
+      ctx.lineTo(sx + sz * 0.4, sy + sz * 0.36);
+      ctx.closePath(); ctx.fill();
+      if (hasSnow) {
+        ctx.fillStyle = rgb(215 + shade * 8, 222 + shade * 6, 230 + shade * 4);
+        ctx.beginPath();
+        ctx.moveTo(sx - sz * 0.12, sy - sz * 0.2);
+        ctx.lineTo(sx, sy - sz * 0.42);
+        ctx.lineTo(sx + sz * 0.11, sy - sz * 0.18);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+
+    function drawRock(ctx, sx, sy, sz, shade) {
+      ctx.fillStyle = rgb(105 + shade * 15, 98 + shade * 12, 82 + shade * 10);
+      ctx.beginPath();
+      ctx.moveTo(sx - sz * 0.25, sy + sz * 0.15);
+      ctx.lineTo(sx - sz * 0.15, sy - sz * 0.18);
+      ctx.lineTo(sx + sz * 0.1, sy - sz * 0.22);
+      ctx.lineTo(sx + sz * 0.28, sy - sz * 0.05);
+      ctx.lineTo(sx + sz * 0.2, sy + sz * 0.18);
+      ctx.closePath(); ctx.fill();
+      // highlight
+      ctx.fillStyle = rgb(125 + shade * 15, 118 + shade * 12, 100 + shade * 10);
+      ctx.beginPath();
+      ctx.moveTo(sx - sz * 0.08, sy - sz * 0.08);
+      ctx.lineTo(sx + sz * 0.06, sy - sz * 0.18);
+      ctx.lineTo(sx + sz * 0.15, sy - sz * 0.02);
+      ctx.closePath(); ctx.fill();
+    }
+
+    function drawResourceMarker(ctx, sx, sy, sz, res) {
+      // glowing circle
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath(); ctx.arc(sx, sy, sz * 0.38, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = res.color;
+      ctx.lineWidth = Math.max(1.5, sz * 0.06);
+      ctx.beginPath(); ctx.arc(sx, sy, sz * 0.32, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = res.color + '44';
+      ctx.beginPath(); ctx.arc(sx, sy, sz * 0.32, 0, Math.PI * 2); ctx.fill();
+      // icon text
+      if (sz > 18) {
+        ctx.font = `${Math.max(8, sz * 0.32) | 0}px serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(res.icon, sx, sy);
+      }
+    }
+
+    function drawWaveLines(ctx, sx, sy, sz, time, tx, ty) {
+      const phase = (tx * 2.3 + ty * 1.7 + time * 0.0015);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = Math.max(0.5, sz * 0.04);
+      for (let i = 0; i < 2; i++) {
+        const oy = sy + sz * (0.2 + i * 0.35);
+        ctx.beginPath();
+        ctx.moveTo(sx, oy + Math.sin(phase + i) * sz * 0.06);
+        ctx.quadraticCurveTo(sx + sz * 0.5, oy + Math.sin(phase + 1 + i) * sz * 0.1, sx + sz, oy + Math.sin(phase + 2 + i) * sz * 0.06);
+        ctx.stroke();
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  MAIN RENDERER
+    // ═══════════════════════════════════════════
+    let canvas, ctx, mmCanvas, mmCtx;
+    let animTime = 0;
+
+    function render(ts) {
+      animTime = ts || 0;
+      const w = canvas.width, h = canvas.height;
+      const z = cam.zoom; // pixels per tile
+
+      ctx.fillStyle = '#080610';
+      ctx.fillRect(0, 0, w, h);
+
+      if (z < 2.5) {
+        // ── Overview mode ──
+        renderOverviewMode();
+      } else {
+        // ── Tile mode ──
+        renderTileMode(z);
+      }
+
+      // ── Vignette ──
+      const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.72);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, 'rgba(0,0,0,0.35)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
+
+      // ── Minimap ──
+      renderMinimap();
+
+      // ── UI ──
+      document.getElementById('zoom-lbl').textContent = `${(z / TILE_PX * 100) | 0}%`;
+    }
+
+    function renderOverviewMode() {
+      // draw overview canvas scaled to screen
+      const [sx0, sy0] = worldToScreen(0, 0);
+      const [sx1, sy1] = worldToScreen(W, W);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(overviewCanvas, sx0, sy0, sx1 - sx0, sy1 - sy0);
+    }
+
+    function renderTileMode(z) {
+      const { x0, y0, x1, y1 } = visibleRange();
+      const total = (x1 - x0 + 1) * (y1 - y0 + 1);
+      const detailedDeco = z >= 12;
+      const simpleDeco = z >= 6 && z < 12;
+      const showGrid = z >= 34;
+      const showResources = z >= 10;
+
+      // ── Background tiles ──
+      for (let ty = y0; ty <= y1; ty++) {
+        for (let tx = x0; tx <= x1; tx++) {
+          const [sx, sy] = worldToScreen(tx, ty);
+          ctx.fillStyle = tileColor(tx, ty);
+          ctx.fillRect(sx, sy, z + 0.8, z + 0.8);
+        }
+      }
+
+      // ── Water effects ──
+      if (z >= 8) {
+        for (let ty = y0; ty <= y1; ty++) {
+          for (let tx = x0; tx <= x1; tx++) {
+            const b = biomes[ty * W + tx];
+            if (b === B.DEEP_SEA || b === B.SHALLOW_SEA || b === B.RIVER || b === B.LAKE) {
+              const [sx, sy] = worldToScreen(tx, ty);
+              drawWaveLines(ctx, sx, sy, z, animTime, tx, ty);
+            }
+          }
+        }
+      }
+
+      // ── Decorations ──
+      if (simpleDeco) {
+        // simplified dots
+        for (let ty = y0; ty <= y1; ty++) {
+          for (let tx = x0; tx <= x1; tx++) {
+            const b = biomes[ty * W + tx];
+            const [sx, sy] = worldToScreen(tx, ty);
+            const cx = sx + z * 0.5, cy = sy + z * 0.5;
+            if (b === B.LIGHT_FOREST || b === B.DENSE_FOREST) {
+              const det = detailMap[ty * W + tx] / 255;
+              ctx.fillStyle = b === B.DENSE_FOREST ? '#1a4a14' : '#2a6a1e';
+              const r = z * 0.22;
+              ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+              if (b === B.DENSE_FOREST && det > 0.4) {
+                ctx.beginPath(); ctx.arc(cx - r * 0.7, cy + r * 0.5, r * 0.7, 0, Math.PI * 2); ctx.fill();
+              }
+            } else if (b === B.MOUNTAIN || b === B.SNOW_PEAK) {
+              ctx.fillStyle = b === B.SNOW_PEAK ? '#c8d0d8' : '#6a6458';
+              ctx.beginPath();
+              ctx.moveTo(cx, cy - z * 0.25);
+              ctx.lineTo(cx - z * 0.2, cy + z * 0.15);
+              ctx.lineTo(cx + z * 0.2, cy + z * 0.15);
+              ctx.closePath(); ctx.fill();
+            } else if (b === B.ROCKY_HILLS) {
+              ctx.fillStyle = '#8a8272';
+              ctx.fillRect(cx - z * 0.12, cy - z * 0.08, z * 0.24, z * 0.18);
+            }
+          }
+        }
+      }
+
+      if (detailedDeco) {
+        for (let ty = y0; ty <= y1; ty++) {
+          for (let tx = x0; tx <= x1; tx++) {
+            const b = biomes[ty * W + tx];
+            const [sx, sy] = worldToScreen(tx, ty);
+            const cx = sx + z * 0.5, cy = sy + z * 0.5;
+            const rng = tileRng(tx, ty);
+
+            if (b === B.LIGHT_FOREST || b === B.DENSE_FOREST) {
+              const count = b === B.DENSE_FOREST ? (2 + (rng() > 0.4 ? 1 : 0)) : (1 + (rng() > 0.6 ? 1 : 0));
+              for (let i = 0; i < count; i++) {
+                const ox = (rng() - 0.5) * z * 0.55;
+                const oy = (rng() - 0.5) * z * 0.55;
+                const s = z * (0.35 + rng() * 0.2);
+                const type = rng();
+                const shade = rng() * 5;
+                drawTree(ctx, cx + ox, cy + oy, s, type, shade);
+              }
+            } else if (b === B.MOUNTAIN || b === B.SNOW_PEAK) {
+              const s = z * (0.7 + rng() * 0.3);
+              const shade = rng() * 6;
+              drawMountainPeak(ctx, cx + (rng() - 0.5) * z * 0.15, cy + z * 0.08, s, b === B.SNOW_PEAK || rng() > 0.4, shade);
+            } else if (b === B.ROCKY_HILLS) {
+              const count = 1 + (rng() > 0.5 ? 1 : 0);
+              for (let i = 0; i < count; i++) {
+                const ox = (rng() - 0.5) * z * 0.4;
+                const oy = (rng() - 0.5) * z * 0.4;
+                drawRock(ctx, cx + ox, cy + oy, z * (0.3 + rng() * 0.2), rng() * 6);
+              }
+            } else if (b === B.GRASS && z >= 22) {
+              // occasional flowers / grass tufts
+              if (rng() < 0.2) {
+                const cols = ['#c8b832', '#d4a828', '#e8c848', '#a8c838'];
+                ctx.fillStyle = cols[(rng() * 4) | 0];
+                ctx.beginPath();
+                ctx.arc(cx + (rng() - 0.5) * z * 0.5, cy + (rng() - 0.5) * z * 0.5, z * 0.04, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            } else if (b === B.BEACH && z >= 22) {
+              // pebbles
+              if (rng() < 0.3) {
+                ctx.fillStyle = 'rgba(140,130,110,0.25)';
+                for (let p = 0; p < 3; p++) {
+                  ctx.beginPath();
+                  ctx.arc(cx + (rng() - 0.5) * z * 0.6, cy + (rng() - 0.5) * z * 0.6, z * 0.025, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // ── Resources ──
+      if (showResources) {
+        for (const [key, res] of resources) {
+          if (res.x >= x0 && res.x <= x1 && res.y >= y0 && res.y <= y1) {
+            const [sx, sy] = worldToScreen(res.x, res.y);
+            drawResourceMarker(ctx, sx + z * 0.5, sy + z * 0.5, z, res);
+          }
+        }
+      }
+
+      // ── Grid ──
+      if (showGrid) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 0.5;
+        for (let ty = y0; ty <= y1 + 1; ty++) {
+          const [sx0g, sy0g] = worldToScreen(x0, ty);
+          const [sx1g] = worldToScreen(x1 + 1, ty);
+          ctx.beginPath(); ctx.moveTo(sx0g, sy0g); ctx.lineTo(sx1g, sy0g); ctx.stroke();
+        }
+        for (let tx = x0; tx <= x1 + 1; tx++) {
+          const [sx0g, sy0g] = worldToScreen(tx, y0);
+          const [, sy1g] = worldToScreen(tx, y1 + 1);
+          ctx.beginPath(); ctx.moveTo(sx0g, sy0g); ctx.lineTo(sx0g, sy1g); ctx.stroke();
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  MINIMAP
+    // ═══════════════════════════════════════════
+    function renderMinimap() {
+      const mc = document.getElementById('minimap');
+      const mctx = mc.getContext('2d');
+
+      // draw cached image
+      mctx.putImageData(minimapImageData, 0, 0);
+
+      // viewport rect
+      const scale = MINIMAP_SIZE / W;
+      const hw = canvas.width / (2 * cam.zoom), hh = canvas.height / (2 * cam.zoom);
+      const rx = (cam.x - hw) * scale, ry = (cam.y - hh) * scale;
+      const rw = hw * 2 * scale, rh = hh * 2 * scale;
+      mctx.strokeStyle = '#c9a84c';
+      mctx.lineWidth = 1.5;
+      mctx.strokeRect(clamp(rx, 0, MINIMAP_SIZE), clamp(ry, 0, MINIMAP_SIZE),
+        Math.min(rw, MINIMAP_SIZE), Math.min(rh, MINIMAP_SIZE));
+
+      // golden border
+      mctx.strokeStyle = 'rgba(201,168,76,0.5)';
+      mctx.lineWidth = 1;
+      mctx.strokeRect(0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+    }
+
+    // ═══════════════════════════════════════════
+    //  TOOLTIP
+    // ═══════════════════════════════════════════
+    const ttEl = document.getElementById('tooltip');
+    const ttTitle = ttEl.querySelector('.tt-title');
+    const ttBody = ttEl.querySelector('.tt-body');
+    const ttCoord = ttEl.querySelector('.tt-coord');
+    let ttVisible = false;
+
+    function updateTooltip(mx, my) {
+      const [wx, wy] = screenToWorld(mx, my);
+      const tx = Math.floor(wx), ty = Math.floor(wy);
+
+      // update coords display
+      if (tx >= 0 && tx < W && ty >= 0 && ty < W) {
+        document.getElementById('coords').textContent = `(${tx}, ${ty})`;
+      } else {
+        document.getElementById('coords').textContent = '—';
+        hideTooltip(); return;
+      }
+
+      const b = biomes[ty * W + tx];
+      const h = heightMap[ty * W + tx];
+      const key = tx + ',' + ty;
+      const res = resources.get(key);
+
+      const icon = BIOME_ICONS[b] || '';
+      const name = BIOME_NAMES[b] || 'Unknown';
+
+      if (res) {
+        ttTitle.textContent = `${res.icon} ${res.name} Lv.${res.level}`;
+        const yieldVal = (res.level * 18 + (h / 255 * 40)) | 0;
+        let yieldType = 'Resources';
+        if (res.name.includes('Gold')) yieldType = 'Gold';
+        else if (res.name.includes('Iron')) yieldType = 'Iron';
+        else if (res.name.includes('Stone')) yieldType = 'Stone';
+        else if (res.name.includes('Lumber')) yieldType = 'Wood';
+        else if (res.name.includes('Farm')) yieldType = 'Food';
+        else if (res.name.includes('Herb')) yieldType = 'Herbs';
+        else if (res.name.includes('Crystal')) yieldType = 'Crystals';
+        else if (res.name.includes('Village')) yieldType = 'Troops';
+        else if (res.name.includes('Ruins')) yieldType = 'Relics';
+        ttBody.innerHTML = `${yieldType}: +${yieldVal}/hr<br><span style="color:var(--text-dim)">${name}</span>`;
+      } else {
+        const lvl = Math.max(1, ((h / 255) * 15) | 0);
+        ttTitle.textContent = `${icon} ${name}`;
+        if (b === B.DEEP_SEA || b === B.SHALLOW_SEA) {
+          ttBody.textContent = 'Impassable waters';
+        } else if (b === B.RIVER || b === B.LAKE) {
+          ttBody.textContent = `Fish: +${(lvl * 8) | 0}/hr`;
+        } else {
+          ttBody.textContent = `Terrain Lv.${lvl}`;
+        }
+      }
+      ttCoord.textContent = `(${tx}, ${ty})`;
+
+      // position
+      let left = mx + 16, top = my - 10;
+      if (left + 200 > window.innerWidth) left = mx - 200;
+      if (top + 80 > window.innerHeight) top = my - 80;
+      ttEl.style.left = left + 'px';
+      ttEl.style.top = Math.max(0, top) + 'px';
+      ttEl.style.display = 'block';
+      ttVisible = true;
+    }
+
+    function hideTooltip() {
+      ttEl.style.display = 'none';
+      ttVisible = false;
+    }
+
+    // ═══════════════════════════════════════════
+    //  INPUT HANDLING
+    // ═══════════════════════════════════════════
+    let dragging = false, dragBtn = -1;
+    let lastMx = 0, lastMy = 0;
+    let mouseX = 0, mouseY = 0;
+    const keys = {};
+
+    function setupInput() {
+      // ── Mouse ──
+      canvas.addEventListener('mousedown', e => {
+        if (e.button === 0 || e.button === 1) {
+          dragging = true; dragBtn = e.button;
+          lastMx = e.clientX; lastMy = e.clientY;
+          canvas.classList.add('grabbing');
+          hideTooltip();
+        }
+      });
+      window.addEventListener('mousemove', e => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        if (dragging) {
+          const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
+          cam.x -= dx / cam.zoom;
+          cam.y -= dy / cam.zoom;
+          cam.vx = -dx / cam.zoom;
+          cam.vy = -dy / cam.zoom;
+          lastMx = e.clientX; lastMy = e.clientY;
+          clampCam();
+        }
+      });
+      window.addEventListener('mouseup', e => {
+        if (dragging && e.button === dragBtn) {
+          dragging = false;
+          canvas.classList.remove('grabbing');
+        }
+      });
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+        const newZoom = clamp(cam.zoom * factor, MIN_ZOOM, MAX_ZOOM);
+
+        // zoom toward cursor
+        const [wx, wy] = screenToWorld(e.clientX, e.clientY);
+        cam.zoom = newZoom;
+        cam.x = wx - (e.clientX - canvas.width / 2) / cam.zoom;
+        cam.y = wy - (e.clientY - canvas.height / 2) / cam.zoom;
+        clampCam();
+      }, { passive: false });
+
+      // ── Hover tooltip ──
+      canvas.addEventListener('mousemove', e => {
+        if (!dragging && biomes) updateTooltip(e.clientX, e.clientY);
+      });
+      canvas.addEventListener('mouseleave', hideTooltip);
+
+      // ── Keyboard ──
+      window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key.toLowerCase() === 'r' && document.activeElement.tagName !== 'INPUT') {
+          document.getElementById('seed-input').value = ((Math.random() * 999999) | 0).toString();
+          regenerate();
+        }
+      });
+      window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+      // ── Minimap click ──
+      const mc = document.getElementById('minimap');
+      let mmDrag = false;
+      mc.addEventListener('mousedown', e => { mmDrag = true; minimapNav(e); });
+      mc.addEventListener('mousemove', e => { if (mmDrag) minimapNav(e); });
+      window.addEventListener('mouseup', () => mmDrag = false);
+
+      function minimapNav(e) {
+        const rect = mc.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) / rect.width * W;
+        const my = (e.clientY - rect.top) / rect.height * W;
+        cam.x = clamp(mx, 0, W);
+        cam.y = clamp(my, 0, W);
+        clampCam();
+      }
+
+      // ── Seed controls ──
+      document.getElementById('btn-gen').addEventListener('click', regenerate);
+      document.getElementById('seed-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') regenerate();
+      });
+    }
+
+    async function regenerate() {
+      const val = document.getElementById('seed-input').value.trim() || '42';
+      cam.x = W / 2; cam.y = W / 2; cam.zoom = DEFAULT_ZOOM;
+      cam.vx = 0; cam.vy = 0;
+      colCache.clear();
+      await generateWorld(val);
+    }
+
+    // ═══════════════════════════════════════════
+    //  UPDATE LOOP
+    // ═══════════════════════════════════════════
+    function update() {
+      // keyboard pan
+      const panSpeed = 420 / cam.zoom;
+      if (keys['w'] || keys['arrowup']) cam.y -= panSpeed / 60;
+      if (keys['s'] || keys['arrowdown']) cam.y += panSpeed / 60;
+      if (keys['a'] || keys['arrowleft']) cam.x -= panSpeed / 60;
+      if (keys['d'] || keys['arrowright']) cam.x += panSpeed / 60;
+
+      // momentum
+      if (!dragging) {
+        if (Math.abs(cam.vx) > 0.005 || Math.abs(cam.vy) > 0.005) {
+          cam.x += cam.vx * 0.3;
+          cam.y += cam.vy * 0.3;
+          cam.vx *= 0.9;
+          cam.vy *= 0.9;
+        } else {
+          cam.vx = 0; cam.vy = 0;
+        }
+      }
+
+      clampCam();
+    }
+
+    // ═══════════════════════════════════════════
+    //  RESIZE
+    // ═══════════════════════════════════════════
+    function onResize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    // ═══════════════════════════════════════════
+    //  MAIN
+    // ═══════════════════════════════════════════
+    async function main() {
+      canvas = document.getElementById('main');
+      ctx = canvas.getContext('2d');
+      onResize();
+      window.addEventListener('resize', onResize);
+
+      setupInput();
+      await generateWorld(42);
+
+      function loop(ts) {
+        update();
+        render(ts);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    main();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="az">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategiya Oyunu - Akademiya Tədqiqat Ağacı</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a1f2c 0%, #0d1017 100%);
+            color: #e1e1e1;
+            overflow-x: auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #f3e5ab;
+            margin-bottom: 8px;
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .tree-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 60px;
+            padding: 40px;
+            background: rgba(16, 20, 28, 0.85);
+            border: 2px solid #2a3447;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(212, 175, 55, 0.05);
+            min-width: 900px;
+        }
+
+        svg.connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 70px;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .node {
+            width: 130px;
+            height: 80px;
+            background: linear-gradient(135deg, #1e2433 0%, #141822 100%);
+            border: 2px solid #3b465e;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            user-select: none;
+        }
+
+        .node .icon {
+            font-size: 18px;
+            margin-bottom: 5px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .node .title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #b0bacc;
+            text-align: center;
+            padding: 0 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        /* Node States */
+        .node.locked {
+            background: linear-gradient(135deg, #13161c 0%, #0d0f14 100%);
+            border-color: #222834;
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .node.locked .title {
+            color: #4a5263;
+        }
+
+        .node.available {
+            border-color: #d4af37;
+            background: linear-gradient(135deg, #2b3347 0%, #1c2230 100%);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        .node.available .title {
+            color: #fceea7;
+        }
+
+        .node.completed {
+            border-color: #2ecc71;
+            background: linear-gradient(135deg, #1b3826 0%, #112217 100%);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .node.completed .title {
+            color: #a3e4d7;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 18px rgba(212, 175, 55, 0.6);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+            }
+        }
+
+        .node:hover:not(.locked) {
+            transform: translateY(-4px) scale(1.03);
+            border-color: #ffffff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: rgba(13, 17, 23, 0.95);
+            border: 1px solid #d4af37;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fff;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Akademiya Tədqiqat Ağacı</h1>
+    <p class="subtitle">Strategiyanı seç, elmi inkişaf etdir və imperiyanı gücləndir.</p>
+
+    <div class="tree-container" id="treeContainer">
+        <svg class="connections" id="svgConnections"></svg>
+
+        <!-- Səviyyə 1 -->
+        <div class="tree-level" data-level="1">
+            <div class="node completed" data-id="1" data-parents="" data-icon="📜">
+                <span class="icon">📜</span>
+                <span class="title">Əsaslar Lv.1</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 2 -->
+        <div class="tree-level" data-level="2">
+            <div class="node available" data-id="2" data-parents="1" data-icon="⚔️">
+                <span class="icon">⚔️</span>
+                <span class="title">Hücum Taktikası</span>
+            </div>
+            <div class="node available" data-id="3" data-parents="1" data-icon="🛡️">
+                <span class="icon">🛡️</span>
+                <span class="title">Müdafiə Sənəti</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 3 -->
+        <div class="tree-level" data-level="3">
+            <div class="node locked" data-id="4" data-parents="2" data-icon="🗡️">
+                <span class="icon">🗡️</span>
+                <span class="title">Qılınc Ustalığı</span>
+            </div>
+            <div class="node locked" data-id="5" data-parents="2" data-icon="🏹">
+                <span class="icon">🏹</span>
+                <span class="title">Oxatan Gücü</span>
+            </div>
+            <div class="node locked" data-id="6" data-parents="3" data-icon="🧱">
+                <span class="icon">🧱</span>
+                <span class="title">Divar Gücləndirmə</span>
+            </div>
+            <div class="node locked" data-id="7" data-parents="3" data-icon="🧪">
+                <span class="icon">🧪</span>
+                <span class="title">Qala Kimyası</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 4 -->
+        <div class="tree-level" data-level="4">
+            <div class="node locked" data-id="8" data-parents="4" data-icon="🔥">
+                <span class="icon">🔥</span>
+                <span class="title">Elit Qılınclar</span>
+            </div>
+            <div class="node locked" data-id="9" data-parents="5,6" data-icon="⚙️">
+                <span class="icon">⚙️</span>
+                <span class="title">Mühəndislik</span>
+            </div>
+            <div class="node locked" data-id="10" data-parents="7" data-icon="🔮">
+                <span class="icon">🔮</span>
+                <span class="title">Sehrli Qoruma</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 5 -->
+        <div class="tree-level" data-level="5">
+            <div class="node locked" data-id="11" data-parents="8" data-icon="⚡">
+                <span class="icon">⚡</span>
+                <span class="title">Qəzəb Zərbəsi</span>
+            </div>
+            <div class="node locked" data-id="12" data-parents="9" data-icon="🏗️">
+                <span class="icon">🏗️</span>
+                <span class="title">Möhkəm Tikinti</span>
+            </div>
+            <div class="node locked" data-id="13" data-parents="10" data-icon="✨">
+                <span class="icon">✨</span>
+                <span class="title">Sehrli Aura</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 6 -->
+        <div class="tree-level" data-level="6">
+            <div class="node locked" data-id="14" data-parents="11" data-icon="🌟">
+                <span class="icon">🌟</span>
+                <span class="title">Əfsanəvi Silah</span>
+            </div>
+            <div class="node locked" data-id="15" data-parents="12" data-icon="🏛️">
+                <span class="icon">🏛️</span>
+                <span class="title">Böyük Qala</span>
+            </div>
+            <div class="node locked" data-id="16" data-parents="12" data-icon="⛏️">
+                <span class="icon">⛏️</span>
+                <span class="title">Qızıl Mədəni</span>
+            </div>
+            <div class="node locked" data-id="17" data-parents="13" data-icon="🌌">
+                <span class="icon">🌌</span>
+                <span class="title">Qaranlıq Güc</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 7 -->
+        <div class="tree-level" data-level="7">
+            <div class="node locked" data-id="18" data-parents="14" data-icon="👑">
+                <span class="icon">👑</span>
+                <span class="title">Hökmdar Qılıncı</span>
+            </div>
+            <div class="node locked" data-id="19" data-parents="15" data-icon="🛡️">
+                <span class="icon">🛡️</span>
+                <span class="title">İmperiya Divarları</span>
+            </div>
+            <div class="node locked" data-id="20" data-parents="16" data-icon="💰">
+                <span class="icon">💰</span>
+                <span class="title">Xəzinədar</span>
+            </div>
+            <div class="node locked" data-id="21" data-parents="17" data-icon="👁️">
+                <span class="icon">👁️</span>
+                <span class="title">Sehrli Göz</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 8 -->
+        <div class="tree-level" data-level="8">
+            <div class="node locked" data-id="22" data-parents="18" data-icon="🦅">
+                <span class="icon">🦅</span>
+                <span class="title">Qartal Baxışı</span>
+            </div>
+            <div class="node locked" data-id="23" data-parents="19" data-icon="🏰">
+                <span class="icon">🏰</span>
+                <span class="title">Qala Qapısı</span>
+            </div>
+            <div class="node locked" data-id="24" data-parents="20" data-icon="💎">
+                <span class="icon">💎</span>
+                <span class="title">Almaz Emalı</span>
+            </div>
+            <div class="node locked" data-id="25" data-parents="21" data-icon="🌀">
+                <span class="icon">🌀</span>
+                <span class="title">Portal</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 9 -->
+        <div class="tree-level" data-level="9">
+            <div class="node locked" data-id="26" data-parents="22" data-icon="⚔️">
+                <span class="icon">⚔️</span>
+                <span class="title">İlahi Ordu</span>
+            </div>
+            <div class="node locked" data-id="27" data-parents="23" data-icon="🛡️">
+                <span class="icon">🛡️</span>
+                <span class="title">Keçilməz Qala</span>
+            </div>
+            <div class="node locked" data-id="28" data-parents="24" data-icon="👑">
+                <span class="icon">👑</span>
+                <span class="title">Kral Xəzinəsi</span>
+            </div>
+            <div class="node locked" data-id="29" data-parents="25" data-icon="✨">
+                <span class="icon">✨</span>
+                <span class="title">Sehrli Master</span>
+            </div>
+        </div>
+
+        <!-- Səviyyə 10 -->
+        <div class="tree-level" data-level="10">
+            <div class="node locked" data-id="30" data-parents="26" data-icon="🏆">
+                <span class="icon">🏆</span>
+                <span class="title">Müharibə Tanrısı</span>
+            </div>
+            <div class="node locked" data-id="31" data-parents="27" data-icon="🏛️">
+                <span class="icon">🏛️</span>
+                <span class="title">Əbədi Qala</span>
+            </div>
+            <div class="node locked" data-id="32" data-parents="28" data-icon="💎">
+                <span class="icon">💎</span>
+                <span class="title">Sonsuz Sərvət</span>
+            </div>
+            <div class="node locked" data-id="33" data-parents="29" data-icon="🌌">
+                <span class="icon">🌌</span>
+                <span class="title">Ali Hakimiyyət</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        function drawLines() {
+            const svg = document.getElementById('svgConnections');
+            const container = document.getElementById('treeContainer');
+            const containerRect = container.getBoundingClientRect();
+
+            svg.innerHTML = '';
+
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                const parentsAttr = node.getAttribute('data-parents');
+                if (!parentsAttr) return;
+
+                const parentIds = parentsAttr.split(',');
+                parentIds.forEach(pId => {
+                    const parentNode = document.querySelector(`.node[data-id="${pId}"]`);
+                    if (parentNode) {
+                        const pRect = parentNode.getBoundingClientRect();
+                        const nRect = node.getBoundingClientRect();
+
+                        const x1 = pRect.left + pRect.width / 2 - containerRect.left;
+                        const y1 = pRect.bottom - containerRect.top;
+                        const x2 = nRect.left + nRect.width / 2 - containerRect.left;
+                        const y2 = nRect.top - containerRect.top;
+
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const deltaY = (y2 - y1) / 2;
+                        const d = `M ${x1} ${y1} C ${x1} ${y1 + deltaY}, ${x2} ${y2 - deltaY}, ${x2} ${y2}`;
+
+                        path.setAttribute('d', d);
+                        path.setAttribute('stroke', parentNode.classList.contains('completed') ? '#2ecc71' : '#2a3447');
+                        path.setAttribute('stroke-width', '3');
+                        path.setAttribute('fill', 'none');
+
+                        svg.appendChild(path);
+                    }
+                });
+            });
+        }
+
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('click', function () {
+                if (this.classList.contains('locked') || this.classList.contains('completed')) return;
+
+                // Yaşıl təsdiq işarəsini göstər
+                const iconSpan = this.querySelector('.icon');
+                const originalIcon = this.getAttribute('data-icon');
+
+                iconSpan.textContent = '✅';
+                this.classList.remove('available');
+                this.classList.add('completed');
+
+                // 2 saniyə (2000ms) gözlədikdən sonra ikon normal vəziyyətə qayıtsın, amma status completed qalsın
+                setTimeout(() => {
+                    iconSpan.textContent = originalIcon;
+                }, 2000);
+
+                const currentId = this.getAttribute('data-id');
+
+                document.querySelectorAll('.node').forEach(targetNode => {
+                    const parentsAttr = targetNode.getAttribute('data-parents');
+                    if (!parentsAttr) return;
+
+                    const parents = parentsAttr.split(',');
+                    if (parents.includes(currentId)) {
+                        const allParentsCompleted = parents.every(pId => {
+                            const pNode = document.querySelector(`.node[data-id="${pId}"]`);
+                            return pNode && pNode.classList.contains('completed');
+                        });
+
+                        if (allParentsCompleted && targetNode.classList.contains('locked')) {
+                            targetNode.classList.remove('locked');
+                            targetNode.classList.add('available');
+                        }
+                    }
+                });
+
+                drawLines();
+            });
+
+            node.addEventListener('mouseenter', e => {
+                const tooltip = document.getElementById('tooltip');
+                let statusText = '<span style="color:#e74c3c;">Kilidlidir (Əvvəlki tədqiqat tələb olunur)</span>';
+                if (node.classList.contains('completed')) statusText = '<span style="color:#2ecc71;">Tamamlanıb (Araşdırılıb)</span>';
+                else if (node.classList.contains('available')) statusText = '<span style="color:#f1c40f;">Açılmağa hazırdır (Kliklə öyrən)</span>';
+
+                tooltip.innerHTML = `<b>${node.querySelector('.title').textContent}</b><br>${statusText}`;
+                tooltip.style.display = 'block';
+            });
+
+            node.addEventListener('mousemove', e => {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.left = e.pageX + 12 + 'px';
+                tooltip.style.top = e.pageY + 12 + 'px';
+            });
+
+            node.addEventListener('mouseleave', () => {
+                document.getElementById('tooltip').style.display = 'none';
+            });
+        });
+
+        window.addEventListener('load', drawLines);
+        window.addEventListener('resize', drawLines);
+    </script>
+</body>
+
+</html>
